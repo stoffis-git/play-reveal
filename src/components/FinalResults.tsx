@@ -2,40 +2,7 @@ import { useState } from 'react';
 import { useGame, getMatchCount, getThemeSummaries, getQuestionForCard } from '../store';
 import { themeColors } from '../types';
 import type { Card, Theme, ThemeSummary } from '../types';
-
-// Insight content for each theme
-const themeInsights: Record<Theme, { whyItMatters: string; conversationStarter: string; nextStep: string }> = {
-  conflict: {
-    whyItMatters: "How you handle disagreements shapes the long-term health of your relationship. Different conflict styles aren't bad—they just need understanding and adaptation.",
-    conversationStarter: "When we have a disagreement, what's one thing I could do differently that would help you feel more heard?",
-    nextStep: "Try the 'time-out' technique: when tensions rise, agree to take 20 minutes apart before continuing."
-  },
-  support: {
-    whyItMatters: "Emotional support is the foundation of feeling truly known by your partner. Understanding each other's support needs prevents feeling alone.",
-    conversationStarter: "When you've had a tough day, what does ideal support from me look like?",
-    nextStep: "Create a 'support menu'—each of you write down 3 things that help you feel supported."
-  },
-  dailyLife: {
-    whyItMatters: "The daily rhythms of life add up. Small misalignments in routines and household dynamics can become sources of ongoing friction.",
-    conversationStarter: "What's one daily habit or routine that you wish we did differently as a couple?",
-    nextStep: "Pick one household task that causes tension and redesign how you approach it together."
-  },
-  intimacy: {
-    whyItMatters: "Physical and emotional closeness keeps your bond strong. Different intimacy needs are normal—what matters is finding a rhythm for both.",
-    conversationStarter: "What makes you feel most connected to me? Is it different from what I might assume?",
-    nextStep: "Schedule a weekly 'connection check-in'—not to solve problems, but to share how close you're feeling."
-  },
-  future: {
-    whyItMatters: "Shared vision creates shared motivation. Understanding where your futures align (and diverge) helps you build toward common goals.",
-    conversationStarter: "What's one thing about our future together that excites you most? What feels uncertain?",
-    nextStep: "Create a 'dreams list' together—things you want to experience, achieve, or build as a couple."
-  },
-  growth: {
-    whyItMatters: "A healthy relationship helps both partners become better versions of themselves. Feeling safe to grow—and be vulnerable—is essential.",
-    conversationStarter: "Is there something you've been wanting to try or change about yourself? How can I support that?",
-    nextStep: "Share one personal goal each and check in monthly on how you're supporting each other's growth."
-  }
-};
+import { getInsightForQuestion } from '../insights';
 
 // More granular score tiers
 function getDetailedScoreTier(matches: number, total: number): { 
@@ -122,7 +89,18 @@ function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: Expanda
   const themeCards = cards.filter(c => c.answer.theme === summary.theme);
   const mismatches = themeCards.filter(c => c.answer.matched === false);
   const themeColor = themeColors[summary.theme];
-  const insight = themeInsights[summary.theme];
+  
+  // Get question-specific insight from first mismatch, or first card in theme, or fallback to theme
+  const firstCard = mismatches[0] || themeCards[0];
+  const question = firstCard ? getQuestionForCard(firstCard) : null;
+  const insight = question 
+    ? getInsightForQuestion(question.id, summary.theme)
+    : { whyItMatters: '', matchConversation: '', mismatchConversation: '', nextStep: '' };
+  
+  // Use mismatch conversation if there are mismatches, otherwise match conversation
+  const conversationStarter = mismatches.length > 0 
+    ? insight.mismatchConversation 
+    : insight.matchConversation;
   
   const statusColor = summary.matchPercentage >= 70 
     ? 'var(--match-green)' 
@@ -189,7 +167,7 @@ function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: Expanda
           {/* Conversation Starter */}
           <div className="expandable-theme__section">
             <div className="expandable-theme__section-title">💬 Try Asking</div>
-            <p className="expandable-theme__conversation">"{insight.conversationStarter}"</p>
+            <p className="expandable-theme__conversation">"{conversationStarter}"</p>
           </div>
         </div>
       )}
@@ -203,7 +181,8 @@ interface GrowthStepProps {
 
 function GrowthStep({ theme }: GrowthStepProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const insight = themeInsights[theme.theme];
+  // For growth steps, use a generic theme insight since we don't have a specific card
+  const insight = getInsightForQuestion('', theme.theme);
   const themeColor = themeColors[theme.theme];
 
   return (

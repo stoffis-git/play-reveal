@@ -2,34 +2,7 @@ import { useState } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard } from '../store';
 import { themeColors } from '../types';
 import type { Theme } from '../types';
-
-// Insight content for each theme
-const themeInsights: Record<Theme, { whyItMatters: string; conversationStarter: string }> = {
-  conflict: {
-    whyItMatters: "How you handle disagreements shapes the long-term health of your relationship. Different conflict styles aren't bad—they just need understanding.",
-    conversationStarter: "When we have a disagreement, what's one thing I could do differently that would help you feel more heard?"
-  },
-  support: {
-    whyItMatters: "Emotional support is the foundation of feeling truly known by your partner. Understanding each other's support needs prevents feeling alone.",
-    conversationStarter: "When you've had a tough day, what does ideal support from me look like?"
-  },
-  dailyLife: {
-    whyItMatters: "The daily rhythms of life add up. Small misalignments in routines can become sources of ongoing friction if not addressed.",
-    conversationStarter: "What's one daily habit or routine that you wish we did differently as a couple?"
-  },
-  intimacy: {
-    whyItMatters: "Physical and emotional closeness keeps your bond strong. Different intimacy needs are normal—what matters is finding a rhythm that works.",
-    conversationStarter: "What makes you feel most connected to me? Is it different from what I might assume?"
-  },
-  future: {
-    whyItMatters: "Shared vision creates shared motivation. Understanding where your futures align helps you build toward common goals.",
-    conversationStarter: "What's one thing about our future together that excites you most? What feels uncertain?"
-  },
-  growth: {
-    whyItMatters: "A healthy relationship helps both partners become better versions of themselves. Feeling safe to grow—and be vulnerable—is essential.",
-    conversationStarter: "Is there something you've been wanting to try or change about yourself? How can I support that?"
-  }
-};
+import { getInsightForQuestion } from '../insights';
 
 export function Paywall() {
   const { state, dispatch } = useGame();
@@ -217,7 +190,10 @@ export function Paywall() {
             const themeMismatches = mismatchedCards.filter(c => c.answer.theme === theme.theme);
             const exampleMismatch = themeMismatches[0];
             const question = exampleMismatch ? getQuestionForCard(exampleMismatch) : null;
-            const insight = themeInsights[theme.theme];
+            const insight = question 
+              ? getInsightForQuestion(question.id, theme.theme)
+              : getInsightForQuestion('', theme.theme);
+            const conversationStarter = insight.mismatchConversation || insight.matchConversation;
             
             return (
               <div 
@@ -289,7 +265,7 @@ export function Paywall() {
                     filter: 'blur(4px)',
                     userSelect: 'none'
                   }}>
-                    💬 "{insight.conversationStarter}"
+                    💬 "{conversationStarter}"
                   </div>
                   <div style={{
                     position: 'absolute',
