@@ -123,6 +123,33 @@ export function LandingPage() {
           </button>
         </div>
 
+        {/* Test Payment Button */}
+        <div style={{ 
+          marginBottom: '32px',
+          textAlign: 'center'
+        }}>
+          <button
+            className="btn btn--accent btn--full"
+            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'paywall' })}
+            style={{
+              maxWidth: '400px',
+              margin: '0 auto',
+              fontSize: '0.9rem',
+              opacity: 0.8
+            }}
+          >
+            ✨ Upgrade to Premium (Test Payment)
+          </button>
+          <p style={{ 
+            fontSize: '0.75rem', 
+            color: 'var(--text-muted)', 
+            marginTop: '8px',
+            fontStyle: 'italic'
+          }}>
+            Skip to payment for testing
+          </p>
+        </div>
+
         {/* How it works */}
         <div style={{ marginBottom: '32px' }}>
           <h3 className="text-center mb-4" style={{ fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
