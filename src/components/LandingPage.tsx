@@ -65,10 +65,10 @@ export function LandingPage() {
           <h1 style={{ marginBottom: '16px' }}>
             Reveal
           </h1>
-          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto' }}>
+          <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto', fontWeight: '500' }}>
             Discover how in-sync you really are
           </p>
-          <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '8px auto 0', fontWeight: '500' }}>
+          <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '8px auto 0' }}>
             The game for couples & relationships
           </p>
         </div>
