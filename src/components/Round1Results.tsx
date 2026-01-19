@@ -1,11 +1,10 @@
-import { useState } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard, getScoreTier } from '../store';
 import { Menu } from './Menu';
 import { themeColors } from '../types';
+import { getInsightForQuestion } from '../insights';
 
 export function Round1Results() {
   const { state, dispatch } = useGame();
-  const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set());
 
   // Handle case where user accesses this screen without playing Round 1
   // (e.g., from landing page test button)
@@ -25,16 +24,6 @@ export function Round1Results() {
     .filter(s => s.matchPercentage < 50)
     .sort((a, b) => a.matchPercentage - b.matchPercentage);
 
-  const toggleTheme = (theme: string) => {
-    const newExpanded = new Set(expandedThemes);
-    if (newExpanded.has(theme)) {
-      newExpanded.delete(theme);
-    } else {
-      newExpanded.add(theme);
-    }
-    setExpandedThemes(newExpanded);
-  };
-
   const handleUnlock = () => {
     // Polar checkout link with success URL containing {CHECKOUT_ID}
     const successUrl = `${window.location.origin}?screen=paymentSuccess&checkout_id={CHECKOUT_ID}`;
@@ -52,13 +41,13 @@ export function Round1Results() {
   return (
     <div className="container paywall animate-slide-up" style={{ paddingBottom: '40px' }}>
       {/* Header with menu */}
-      <div className="game-header" style={{ marginBottom: '12px' }}>
+      <div className="game-header" style={{ marginBottom: '0px' }}>
         <Menu buttonPosition="inline" />
         <div style={{ flex: 1 }}></div>
       </div>
 
       {/* Score Summary Header */}
-      <div className="results-header" style={{ marginBottom: '20px' }}>
+      <div className="results-header" style={{ marginBottom: '12px' }}>
         <div style={{ 
           background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
           color: 'white',
@@ -80,7 +69,7 @@ export function Round1Results() {
               <div className="results-score__label">in sync</div>
             </div>
             {tier && (
-              <div className="results-tier" style={{ marginBottom: '8px' }}>
+              <div className="results-tier" style={{ marginBottom: '0px' }}>
                 <div className="results-tier__name">{tier.tier}</div>
                 <p className="results-tier__desc">{tier.description}</p>
               </div>
@@ -91,7 +80,7 @@ export function Round1Results() {
 
       {/* Strengths Preview */}
       {strengthThemes.length > 0 && (
-        <div style={{ marginBottom: '24px' }}>
+        <div style={{ marginBottom: '20px', marginTop: '8px' }}>
           <h4 style={{ 
             fontSize: '0.9rem', 
             fontWeight: '700',
@@ -137,7 +126,7 @@ export function Round1Results() {
         </div>
       )}
 
-      {/* Growth Areas with Expandable Tiles - only show if we have Round 1 data */}
+      {/* Growth Areas with Blurred Preview - only show if we have Round 1 data */}
       {hasRound1Data && growthThemes.length > 0 && (
         <div style={{ marginBottom: '32px' }}>
           <h4 style={{ 
@@ -149,12 +138,17 @@ export function Round1Results() {
             alignItems: 'center',
             gap: '8px'
           }}>
-            🌱 You Differed On
+            🌱 Growth Opportunities
           </h4>
           
-          {growthThemes.map(theme => {
+          {growthThemes.slice(0, 2).map(theme => {
             const themeMismatches = mismatchedCards.filter(c => c.answer.theme === theme.theme);
-            const isExpanded = expandedThemes.has(theme.theme);
+            const exampleMismatch = themeMismatches[0];
+            const question = exampleMismatch ? getQuestionForCard(exampleMismatch) : null;
+            const insight = question 
+              ? getInsightForQuestion(question.id, theme.theme)
+              : getInsightForQuestion('', theme.theme);
+            const conversationStarter = insight.mismatchConversation || insight.matchConversation;
             
             return (
               <div 
@@ -168,104 +162,83 @@ export function Round1Results() {
                   borderLeft: `4px solid ${themeColors[theme.theme]}`
                 }}
               >
-                <div 
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: isExpanded ? '12px' : 0,
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => toggleTheme(theme.theme)}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ 
-                      fontWeight: '600',
-                      color: themeColors[theme.theme]
-                    }}>
-                      {theme.displayName}
-                    </span>
-                    <span style={{
-                      fontSize: '0.8rem',
-                      color: 'var(--mismatch-amber)',
-                      fontWeight: '600'
-                    }}>
-                      {theme.matchPercentage}% aligned
-                    </span>
-                  </div>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  marginBottom: '12px'
+                }}>
                   <span style={{ 
-                    fontSize: '1.2rem',
-                    transform: isExpanded ? 'rotate(180deg)' : 'rotate(0deg)',
-                    transition: 'transform 0.2s ease'
+                    fontWeight: '600',
+                    color: themeColors[theme.theme]
                   }}>
-                    ▼
+                    {theme.displayName}
+                  </span>
+                  <span style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--mismatch-amber)',
+                    fontWeight: '600'
+                  }}>
+                    {theme.matchPercentage}% aligned
                   </span>
                 </div>
                 
-                {isExpanded && (
-                  <div style={{ marginTop: '12px' }}>
-                    {themeMismatches.map(card => {
-                      const question = getQuestionForCard(card);
-                      if (!question) return null;
-                      
-                      return (
-                        <div 
-                          key={card.id}
-                          style={{
-                            background: 'var(--bg-secondary)',
-                            borderRadius: '12px',
-                            padding: '16px',
-                            marginBottom: '12px'
-                          }}
-                        >
-                          <div style={{
-                            display: 'inline-block',
-                            padding: '4px 10px',
-                            borderRadius: '100px',
-                            fontSize: '0.75rem',
-                            fontWeight: '600',
-                            background: `${themeColors[card.answer.theme]}20`,
-                            color: themeColors[card.answer.theme],
-                            marginBottom: '12px'
-                          }}>
-                            {question.theme.charAt(0).toUpperCase() + question.theme.slice(1)}
-                          </div>
-                          <p style={{ fontWeight: '500', marginBottom: '12px', fontSize: '0.9rem' }}>
-                            {question.text}
-                          </p>
-                          <div style={{ display: 'flex', gap: '12px', fontSize: '0.875rem' }}>
-                            <div style={{
-                              flex: 1,
-                              padding: '10px',
-                              background: 'var(--partner1-light)',
-                              borderRadius: '8px',
-                              borderLeft: '3px solid var(--partner1)'
-                            }}>
-                              <strong style={{ fontSize: '0.75rem', color: 'var(--partner1)' }}>
-                                {state.partner1Name}:
-                              </strong>
-                              <br />
-                              {card.answer.partner1Answer === 'A' ? question.optionA : question.optionB}
-                            </div>
-                            <div style={{
-                              flex: 1,
-                              padding: '10px',
-                              background: 'var(--partner2-light)',
-                              borderRadius: '8px',
-                              borderLeft: '3px solid var(--partner2)'
-                            }}>
-                              <strong style={{ fontSize: '0.75rem', color: 'var(--partner2)' }}>
-                                {state.partner2Name}:
-                              </strong>
-                              <br />
-                              {card.answer.partner2Answer === 'A' ? question.optionA : question.optionB}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
+                {question && (
+                  <div style={{
+                    fontSize: '0.85rem',
+                    fontStyle: 'italic',
+                    color: 'var(--text-secondary)',
+                    marginBottom: '12px',
+                    padding: '8px 12px',
+                    background: 'var(--bg-secondary)',
+                    borderRadius: '8px'
+                  }}>
+                    "{question.text}"
                   </div>
                 )}
+                
+                <p style={{
+                  fontSize: '0.85rem',
+                  color: 'var(--text-secondary)',
+                  lineHeight: '1.4',
+                  margin: 0
+                }}>
+                  {insight.whyItMatters}
+                </p>
+                
+                {/* Blurred conversation starter as teaser */}
+                <div style={{
+                  marginTop: '12px',
+                  padding: '10px 12px',
+                  background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
+                  borderRadius: '8px',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    fontSize: '0.8rem',
+                    color: 'var(--text-primary)',
+                    filter: 'blur(4px)',
+                    userSelect: 'none'
+                  }}>
+                    💬 "{conversationStarter}"
+                  </div>
+                  <div style={{
+                    position: 'absolute',
+                    inset: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'rgba(255,255,255,0.6)'
+                  }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: '600',
+                      color: 'var(--partner1)'
+                    }}>
+                      🔒 Unlock in Round 2
+                    </span>
+                  </div>
+                </div>
               </div>
             );
           })}
@@ -293,7 +266,7 @@ export function Round1Results() {
           }}>
             Ready for Round 2?
           </h3>
-          <p style={{ 
+          //<p style={{ 
             fontSize: '0.9rem',
             color: 'var(--text-secondary)',
             marginBottom: '16px'
