@@ -330,6 +330,13 @@ h3 {
   border: 2px solid rgba(255, 255, 255, 0.25);
 }
 
+/* Muted grey when current player has already answered */
+.game-card--partner1-answered.game-card--player1 {
+  background: #E0E0E0;
+  border-color: #BDBDBD;
+  opacity: 0.7;
+}
+
 .game-card--partner1-answered.game-card--player2:hover {
   box-shadow: 0 4px 20px rgba(178, 132, 224, 0.4);
 }
@@ -342,6 +349,13 @@ h3 {
   align-items: center;
   justify-content: center;
   border: 2px solid rgba(255, 255, 255, 0.25);
+}
+
+/* Muted grey when current player has already answered */
+.game-card--partner2-answered.game-card--player2 {
+  background: #E0E0E0;
+  border-color: #BDBDBD;
+  opacity: 0.7;
 }
 
 .game-card--partner2-answered.game-card--player1:hover {
