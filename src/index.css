@@ -638,24 +638,34 @@ h3 {
   text-align: left;
 }
 
-/* Player 1 (blue) option styles */
+/* Player 1 (coral) option styles */
+.question-modal__option--player1 {
+  background: var(--partner1-light);
+}
+
 .question-modal__option--player1:hover {
   background: var(--partner1-light);
   border-color: var(--partner1);
 }
 
 .question-modal__option--player1 .question-modal__option-letter {
-  color: var(--partner1);
+  background: var(--partner1);
+  color: white;
 }
 
-/* Player 2 (pink) option styles */
+/* Player 2 (lavender) option styles */
+.question-modal__option--player2 {
+  background: var(--partner2-light);
+}
+
 .question-modal__option--player2:hover {
   background: var(--partner2-light);
   border-color: var(--partner2);
 }
 
 .question-modal__option--player2 .question-modal__option-letter {
-  color: var(--partner2);
+  background: var(--partner2);
+  color: white;
 }
 
 .question-modal__option-letter {
@@ -699,6 +709,17 @@ h3 {
   background: var(--bg-secondary);
   border-radius: 8px;
   line-height: 1.4;
+}
+
+/* Player-specific example background */
+.question-modal--player1 .question-modal__example {
+  background: var(--partner1-light);
+  color: var(--partner1-dark);
+}
+
+.question-modal--player2 .question-modal__example {
+  background: var(--partner2-light);
+  color: var(--partner2-dark);
 }
 
 .question-modal__hint {
