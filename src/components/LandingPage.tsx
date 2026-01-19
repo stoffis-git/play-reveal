@@ -4,29 +4,40 @@ import { useGame } from '../store';
 const STORAGE_KEY = 'relationship-game-names';
 
 export function LandingPage() {
-  const { dispatch } = useGame();
+  const { state, dispatch } = useGame();
   const [partner1Name, setPartner1Name] = useState('');
   const [partner2Name, setPartner2Name] = useState('');
   const [error, setError] = useState('');
+
+  // Check if there's existing progress
+  const hasProgress = state.sessionId && (
+    state.round1Cards.some(card => card.state !== 'faceDown') ||
+    state.round2Cards.some(card => card.state !== 'faceDown')
+  );
 
   // Scroll to top on mount/refresh
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
 
-  // Load names from localStorage on mount
+  // Load names from localStorage on mount, or from game state if available
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const { partner1, partner2 } = JSON.parse(stored);
-        if (partner1) setPartner1Name(partner1);
-        if (partner2) setPartner2Name(partner2);
+    if (state.partner1Name && state.partner2Name) {
+      setPartner1Name(state.partner1Name);
+      setPartner2Name(state.partner2Name);
+    } else {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        if (stored) {
+          const { partner1, partner2 } = JSON.parse(stored);
+          if (partner1) setPartner1Name(partner1);
+          if (partner2) setPartner2Name(partner2);
+        }
+      } catch {
+        // Ignore parse errors
       }
-    } catch {
-      // Ignore parse errors
     }
-  }, []);
+  }, [state.partner1Name, state.partner2Name]);
 
   // Save names to localStorage when they change
   useEffect(() => {
@@ -48,6 +59,13 @@ export function LandingPage() {
     partner1Name.trim().toLowerCase() !== partner2Name.trim().toLowerCase();
 
   const handleStart = () => {
+    if (hasProgress) {
+      // Continue existing game
+      dispatch({ type: 'CONTINUE_GAME' });
+      return;
+    }
+
+    // Start new game
     if (!isValid) {
       if (partner1Name.trim().toLowerCase() === partner2Name.trim().toLowerCase()) {
         setError('Names must be different');
@@ -143,9 +161,9 @@ export function LandingPage() {
           <button
             className="btn btn--primary btn--full"
             onClick={handleStart}
-            disabled={!isValid}
+            disabled={!hasProgress && !isValid}
           >
-            Start Game
+            {hasProgress ? 'Continue Game' : 'Start Game'}
           </button>
           <p style={{ 
             fontSize: '0.75rem', 

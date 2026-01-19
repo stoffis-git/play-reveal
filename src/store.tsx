@@ -10,6 +10,7 @@ const STORAGE_KEY = 'relationship-game-state';
 
 type GameAction =
   | { type: 'START_GAME'; partner1Name: string; partner2Name: string }
+  | { type: 'CONTINUE_GAME' }
   | { type: 'SELECT_CARD'; index: number }
   | { type: 'ANSWER_QUESTION'; answer: 'A' | 'B' }
   | { type: 'NAVIGATE_TO'; screen: GameScreen }
@@ -65,6 +66,16 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         round2Complete: false,
         selectedCardIndex: null
       };
+
+    case 'CONTINUE_GAME':
+      // Navigate to the appropriate screen based on game state
+      if (state.round2Complete) {
+        return { ...state, currentScreen: 'finalResults' };
+      } else if (state.round1Complete) {
+        return { ...state, currentScreen: state.hasPaid ? 'round2' : 'round1Results' };
+      } else {
+        return { ...state, currentScreen: 'round1' };
+      }
 
     case 'SELECT_CARD':
       // Handle deselection
