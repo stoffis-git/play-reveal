@@ -61,7 +61,17 @@ export function LandingPage() {
       <div className="animate-slide-up">
         {/* Hero */}
         <div className="text-center mb-8">
-          <div style={{ fontSize: '4rem', marginBottom: '16px' }}>💕</div>
+          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+            <img 
+              src="/reveal_icon.png" 
+              alt="Reveal Logo" 
+              style={{ 
+                width: '80px', 
+                height: '80px',
+                objectFit: 'contain'
+              }} 
+            />
+          </div>
           <h1 style={{ marginBottom: '16px' }}>
             Reveal
           </h1>
