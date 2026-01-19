@@ -7,6 +7,13 @@ import { round1Questions, getQuestionById } from './questions';
 import { selectRound2Questions } from './algorithm';
 
 const STORAGE_KEY = 'relationship-game-state';
+// Separate key for payment to persist across new sessions
+// Payment status persists until user:
+// - Clears browser data/localStorage manually
+// - Uses a different device/browser
+// - Uses incognito/private mode (payment won't persist across sessions)
+// - Browser storage quota is exceeded and localStorage is cleared
+const PAYMENT_STORAGE_KEY = 'relationship-game-payment-status';
 
 type GameAction =
   | { type: 'START_GAME'; partner1Name: string; partner2Name: string }
@@ -177,6 +184,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'COMPLETE_PAYMENT':
+      // Persist payment status separately so it survives new sessions
+      try {
+        localStorage.setItem(PAYMENT_STORAGE_KEY, 'true');
+      } catch {
+        // Ignore storage errors
+      }
       return {
         ...state,
         hasPaid: true,
@@ -227,6 +240,9 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'RESET_GAME':
       try {
         localStorage.removeItem(STORAGE_KEY);
+        // Note: We intentionally keep PAYMENT_STORAGE_KEY so payment status persists
+        // even after resetting game progress. Users would need to clear browser data
+        // or use a different device/browser to lose payment status.
       } catch {
         // Ignore storage errors
       }
@@ -300,7 +316,19 @@ function loadPersistedState(): Partial<GameState> | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
-      return JSON.parse(stored);
+      const parsed = JSON.parse(stored);
+      
+      // Also check for payment status in separate storage (persists across new sessions)
+      try {
+        const paymentStatus = localStorage.getItem(PAYMENT_STORAGE_KEY);
+        if (paymentStatus === 'true') {
+          parsed.hasPaid = true;
+        }
+      } catch {
+        // Ignore payment storage errors
+      }
+      
+      return parsed;
     }
   } catch {
     // Ignore parse errors
@@ -336,10 +364,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [state, dispatch] = useReducer(gameReducer, initialState, (initial) => {
     // Load persisted state on initialization
     const persisted = loadPersistedState();
-    if (persisted && persisted.sessionId) {
-      return { ...initial, ...persisted } as GameState;
+    
+    // If no session but payment exists, restore payment status
+    if (!persisted || !persisted.sessionId) {
+      try {
+        const paymentStatus = localStorage.getItem(PAYMENT_STORAGE_KEY);
+        if (paymentStatus === 'true') {
+          return { ...initial, hasPaid: true } as GameState;
+        }
+      } catch {
+        // Ignore payment storage errors
+      }
+      return initial;
     }
-    return initial;
+    
+    return { ...initial, ...persisted } as GameState;
   });
 
   // Persist state on every change

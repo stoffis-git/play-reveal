@@ -203,10 +203,24 @@ export function LandingPage() {
           )}
         </div>
 
+        <div style={{ 
+          marginTop: '24px', 
+          marginBottom: '12px',
+          textAlign: 'center'
+        }}>
+          <p style={{ 
+            fontSize: '0.9rem', 
+            color: 'var(--text-secondary)',
+            fontWeight: '500',
+            margin: 0
+          }}>
+            Playing alone?
+          </p>
+        </div>
         <button
           className="btn btn--secondary btn--full"
           onClick={handleSendReminder}
-          style={{ marginTop: '-12px', marginBottom: '24px' }}
+          style={{ marginTop: '0', marginBottom: '24px' }}
         >
           Send to partner to play later
         </button>
