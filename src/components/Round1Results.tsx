@@ -34,10 +34,11 @@ export function Round1Results() {
     }
     
     // Polar checkout link
-    // IMPORTANT: You MUST configure success_url in Polar dashboard for this link:
+    // IMPORTANT: Configure success_url in Polar dashboard for this link:
     // Go to Polar dashboard → Products → Checkout Links → Edit this link
-    // Set success_url to: https://playreveal.com?screen=paymentSuccess
-    // Without this, users will be stuck on Polar's payment success page with no return button
+    // Set success_url to: https://playreveal.com?screen=paymentSuccess&checkout_id={CHECKOUT_ID}
+    // The {CHECKOUT_ID} is optional but recommended (displays order ID to user)
+    // Without success_url configured, users will be stuck on Polar's payment success page
     const polarCheckoutUrl = `https://buy.polar.sh/polar_cl_nJ2vx1fXaiRId4N9pKEu6Gg92x9SCbZhcJy6n0hhaJu`;
     
     // Redirect to Polar checkout
