@@ -23,13 +23,25 @@ export function PaymentSuccess() {
       }
     }
 
+    let startRound2Timer: number | null = null;
+
     // Complete the payment after a brief moment
-    const timer = setTimeout(() => {
+    const paymentTimer = setTimeout(() => {
       dispatch({ type: 'COMPLETE_PAYMENT' });
       setIsProcessing(false);
+      
+      // Automatically start Round 2 after showing success briefly (2 seconds total)
+      startRound2Timer = setTimeout(() => {
+        dispatch({ type: 'START_ROUND_2' });
+      }, 2000);
     }, 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      clearTimeout(paymentTimer);
+      if (startRound2Timer) {
+        clearTimeout(startRound2Timer);
+      }
+    };
   }, [dispatch]);
 
   const handleStartRound2 = () => {
