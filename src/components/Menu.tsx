@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame } from '../store';
 
-export function Menu() {
+export function Menu({ buttonPosition }: { buttonPosition?: 'inline' | 'fixed' }) {
   const [isOpen, setIsOpen] = useState(false);
   const { state, dispatch } = useGame();
 
@@ -36,18 +36,26 @@ export function Menu() {
   // Don't show menu on landing page
   if (state.currentScreen === 'landing') return null;
 
+  const burgerButton = (
+    <button 
+      className={`menu-burger ${buttonPosition === 'inline' ? 'menu-burger--inline' : ''}`}
+      onClick={() => setIsOpen(!isOpen)}
+      aria-label="Menu"
+    >
+      <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
+      <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
+      <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
+    </button>
+  );
+
   return (
     <>
-      {/* Burger button */}
-      <button 
-        className="menu-burger"
-        onClick={() => setIsOpen(!isOpen)}
-        aria-label="Menu"
-      >
-        <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
-        <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
-        <span className={`menu-burger__line ${isOpen ? 'menu-burger__line--open' : ''}`}></span>
-      </button>
+      {/* Burger button - render inline or fixed based on prop */}
+      {buttonPosition === 'inline' ? burgerButton : (
+        <>
+          {burgerButton}
+        </>
+      )}
 
       {/* Menu overlay */}
       {isOpen && (

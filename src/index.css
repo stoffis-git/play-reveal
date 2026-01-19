@@ -333,20 +333,28 @@ h3 {
 
 
 .game-card--partner1-answered {
-  background: linear-gradient(145deg, var(--partner1) 0%, var(--partner1-dark) 100%);
+  background: linear-gradient(145deg, var(--card-unplayed) 0%, var(--card-unplayed-hover) 100%);
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Muted grey when current player has already answered */
-.game-card--partner1-answered.game-card--player1 {
-  background: #E0E0E0;
-  border-color: #BDBDBD;
-  opacity: 0.7;
+/* Player indicator dot for answered cards */
+.game-card--partner1-answered::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  background: var(--partner1);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 .game-card--partner1-answered.game-card--player2:hover {
@@ -354,20 +362,28 @@ h3 {
 }
 
 .game-card--partner2-answered {
-  background: linear-gradient(145deg, var(--partner2) 0%, var(--partner2-dark) 100%);
+  background: linear-gradient(145deg, var(--card-unplayed) 0%, var(--card-unplayed-hover) 100%);
   box-shadow: var(--card-shadow);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  border: 2px solid rgba(255, 255, 255, 0.15);
 }
 
-/* Muted grey when current player has already answered */
-.game-card--partner2-answered.game-card--player2 {
-  background: #E0E0E0;
-  border-color: #BDBDBD;
-  opacity: 0.7;
+/* Player indicator dot for answered cards */
+.game-card--partner2-answered::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 12px;
+  height: 12px;
+  background: var(--partner2);
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  z-index: 1;
 }
 
 .game-card--partner2-answered.game-card--player1:hover {
@@ -523,7 +539,6 @@ h3 {
   border-radius: 100px;
   font-weight: 600;
   font-size: 0.8rem;
-  margin-bottom: 4px;
   animation: slideIn 0.3s ease;
 }
 
@@ -1881,12 +1896,24 @@ h3 {
   margin: 0;
 }
 
+/* Game header with menu and turn indicator */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  margin-bottom: 8px;
+  gap: 12px;
+}
+
+.turn-indicator-wrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+}
+
 /* Menu */
 .menu-burger {
-  position: fixed;
-  top: 12px;
-  right: 12px;
-  z-index: 50; /* Below modals/overlays */
   width: 36px;
   height: 36px;
   background: rgba(255, 255, 255, 0.9);
@@ -1901,6 +1928,22 @@ h3 {
   padding: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.menu-burger--inline {
+  position: relative;
+  top: auto;
+  right: auto;
+  z-index: auto;
+}
+
+/* Default fixed positioning when not inline */
+.menu-burger:not(.menu-burger--inline) {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 50;
 }
 
 .menu-burger:hover {

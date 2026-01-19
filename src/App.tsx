@@ -43,10 +43,18 @@ function GameRouter() {
 function App() {
   return (
     <GameProvider>
-      <Menu />
+      <MenuWrapper />
       <GameRouter />
     </GameProvider>
   );
+}
+
+function MenuWrapper() {
+  const { state } = useGame();
+  // Don't render Menu in App for game screens - GameBoard will render it inline
+  const isGameScreen = state.currentScreen === 'round1' || state.currentScreen === 'round2';
+  if (isGameScreen) return null;
+  return <Menu />;
 }
 
 export default App;

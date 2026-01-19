@@ -79,7 +79,7 @@ export function LandingPage() {
             />
             <h1 style={{ 
               marginBottom: 0,
-              color: '#BA0071',
+              color: '#E01D94',
               fontSize: '3rem'
             }}>
               Reveal

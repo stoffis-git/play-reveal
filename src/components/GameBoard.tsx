@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useGame, getMatchCount } from '../store';
 import { getQuestionWithExample, getRound2Intro } from '../questions';
 import { RevealScreen } from './RevealScreen';
+import { Menu } from './Menu';
 import type { Card } from '../types';
 import { themeTinyLabels, themeColors } from '../types';
 
@@ -218,11 +219,14 @@ export function GameBoard({ round }: GameBoardProps) {
         </div>
       )}
 
-      {/* Turn indicator */}
-      <div className="text-center">
-        <div className={`turn-indicator turn-indicator--partner${state.currentPlayer}`}>
-          <span className="turn-indicator__dot"></span>
-          {currentPlayerName.toUpperCase()}'S TURN
+      {/* Header with menu and turn indicator */}
+      <div className="game-header">
+        <Menu buttonPosition="inline" />
+        <div className="turn-indicator-wrapper">
+          <div className={`turn-indicator turn-indicator--partner${state.currentPlayer}`}>
+            <span className="turn-indicator__dot"></span>
+            {currentPlayerName.toUpperCase()}'S TURN
+          </div>
         </div>
       </div>
 
@@ -257,7 +261,7 @@ export function GameBoard({ round }: GameBoardProps) {
         color: 'var(--text-secondary)',
         marginBottom: '2px'
       }}>
-        👆 Pick any card ({availableForMe} available)
+        👇 Pick any card ({availableForMe} available)
       </div>
 
       {/* Card grid */}
