@@ -25,9 +25,18 @@ export function Round1Results() {
     .sort((a, b) => a.matchPercentage - b.matchPercentage);
 
   const handleUnlock = () => {
-    // Polar checkout link with success URL containing {CHECKOUT_ID}
-    const successUrl = `${window.location.origin}?screen=paymentSuccess&checkout_id={CHECKOUT_ID}`;
-    const polarCheckoutUrl = `https://buy.polar.sh/polar_cl_nJ2vx1fXaiRId4N9pKEu6Gg92x9SCbZhcJy6n0hhaJu?success_url=${encodeURIComponent(successUrl)}`;
+    // Store payment initiation flag in localStorage
+    // This allows us to detect when user returns from payment, even if Polar doesn't redirect
+    try {
+      localStorage.setItem('reveal-payment-initiated', 'true');
+      localStorage.setItem('reveal-payment-initiated-time', Date.now().toString());
+    } catch {
+      // Ignore storage errors
+    }
+    
+    // Polar checkout link - note: success_url must be configured in Polar dashboard/API
+    // Query param success_url doesn't work with checkout links
+    const polarCheckoutUrl = `https://buy.polar.sh/polar_cl_nJ2vx1fXaiRId4N9pKEu6Gg92x9SCbZhcJy6n0hhaJu`;
     
     // Redirect to Polar checkout
     window.location.href = polarCheckoutUrl;
@@ -333,6 +342,15 @@ export function Round1Results() {
       >
         ✨ Unlock Round 2 — $4.99
       </button>
+      <p style={{ 
+        fontSize: '0.7rem', 
+        color: 'var(--text-muted)', 
+        textAlign: 'center',
+        marginTop: '8px',
+        fontStyle: 'italic'
+      }}>
+        After payment, return here and Round 2 will unlock automatically
+      </p>
       
       <button
         className="btn btn--ghost"

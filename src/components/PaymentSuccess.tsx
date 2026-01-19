@@ -8,8 +8,7 @@ export function PaymentSuccess() {
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    // Read checkout_id from localStorage (App.tsx stores it there before cleaning URL)
-    // This is more reliable than reading from URL since App.tsx cleans it before we mount
+    // Read checkout_id from localStorage (if available)
     let id: string | null = null;
     try {
       id = localStorage.getItem('reveal-checkout-id');
@@ -22,25 +21,44 @@ export function PaymentSuccess() {
     }
 
     let startRound2Timer: number | null = null;
+    let paymentTimer: number | null = null;
 
-    // Complete the payment after a brief moment
-    const paymentTimer = setTimeout(() => {
-      dispatch({ type: 'COMPLETE_PAYMENT' });
+    // If payment already marked as complete (from App.tsx auto-detection), skip processing
+    if (state.hasPaid) {
       setIsProcessing(false);
-      
-      // Automatically start Round 2 after showing success briefly (2 seconds total)
-      startRound2Timer = setTimeout(() => {
-        dispatch({ type: 'START_ROUND_2' });
-      }, 2000);
-    }, 1500);
+      // Auto-start Round 2 immediately if cards aren't initialized
+      if (state.round2Cards.length === 0) {
+        startRound2Timer = setTimeout(() => {
+          dispatch({ type: 'START_ROUND_2' });
+        }, 1000);
+      } else {
+        // Round 2 already initialized, just navigate
+        startRound2Timer = setTimeout(() => {
+          dispatch({ type: 'NAVIGATE_TO', screen: 'round2' });
+        }, 1000);
+      }
+    } else {
+      // Complete the payment after a brief moment
+      paymentTimer = setTimeout(() => {
+        dispatch({ type: 'COMPLETE_PAYMENT' });
+        setIsProcessing(false);
+        
+        // Automatically start Round 2 after showing success briefly (2 seconds total)
+        startRound2Timer = setTimeout(() => {
+          dispatch({ type: 'START_ROUND_2' });
+        }, 2000);
+      }, 1500);
+    }
 
     return () => {
-      clearTimeout(paymentTimer);
+      if (paymentTimer) {
+        clearTimeout(paymentTimer);
+      }
       if (startRound2Timer) {
         clearTimeout(startRound2Timer);
       }
     };
-  }, [dispatch]);
+  }, [dispatch, state.hasPaid, state.round2Cards.length]);
 
   const handleStartRound2 = () => {
     dispatch({ type: 'START_ROUND_2' });
