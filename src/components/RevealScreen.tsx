@@ -70,7 +70,7 @@ export function RevealScreen({ card, partner1Name, partner2Name, onContinue }: R
             </div>
 
             {/* Deep Dive Dropdown for matched cards */}
-            <div className="reveal-screen__deepdive">
+            <div className={`reveal-screen__deepdive ${showDeepDive ? 'reveal-screen__deepdive--open' : ''}`}>
               <button 
                 className="reveal-screen__deepdive-toggle"
                 onClick={() => setShowDeepDive(!showDeepDive)}

@@ -1568,6 +1568,14 @@ h3 {
 /* Deep Dive Dropdown */
 .reveal-screen__deepdive {
   margin-bottom: 14px;
+  background: var(--bg-secondary);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: background var(--transition-fast);
+}
+
+.reveal-screen__deepdive--open {
+  background: linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%);
 }
 
 .reveal-screen__deepdive-toggle {
@@ -1576,7 +1584,7 @@ h3 {
   align-items: center;
   justify-content: space-between;
   padding: 10px 14px;
-  background: var(--bg-secondary);
+  background: transparent;
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -1587,8 +1595,13 @@ h3 {
   transition: all var(--transition-fast);
 }
 
+.reveal-screen__deepdive--open .reveal-screen__deepdive-toggle {
+  color: var(--text-primary);
+  padding-bottom: 6px;
+}
+
 .reveal-screen__deepdive-toggle:hover {
-  background: var(--bg-secondary);
+  background: transparent;
 }
 
 .reveal-screen__deepdive-arrow {
@@ -1601,10 +1614,10 @@ h3 {
 }
 
 .reveal-screen__deepdive-content {
-  padding: 12px 14px;
-  margin-top: 8px;
-  background: linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%);
-  border-radius: 10px;
+  padding: 0 14px 12px 14px;
+  margin-top: 0;
+  background: transparent;
+  border-radius: 0;
   animation: slideDown 0.2s ease;
 }
 
