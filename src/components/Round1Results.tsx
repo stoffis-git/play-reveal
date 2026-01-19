@@ -283,7 +283,7 @@ export function Round1Results() {
             marginBottom: '8px',
             textAlign: 'center'
           }}>
-            ROUND 2: DEEP DIVE
+            ROUND 2: DEEP DIVE & ANALYSIS
           </div>
           <div style={{ 
             fontSize: '2rem',
@@ -312,9 +312,9 @@ export function Round1Results() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
             {[
-              { icon: '🎴', text: '15 more questions. Based on your previous matches!' },
+              { icon: '🎴', text: '+ 15 questions based on your round 1.' },
               { icon: '📊', text: 'Complete relationship insights.' }, 
-              { icon: '💬', text: 'Full onversation starters with deep dives.' },
+              { icon: '💬', text: 'Full conversation starters with deep dives.' },
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span>{item.icon}</span>

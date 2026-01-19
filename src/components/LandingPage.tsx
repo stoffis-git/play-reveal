@@ -79,6 +79,33 @@ export function LandingPage() {
     });
   };
 
+  const handleSendReminder = async () => {
+    const url = window.location.origin;
+    const text = `Let\u2019s play this together later: Reveal \u2013 the game for couples.\n\nWhen we\u2019re both free, open this on one phone and we\u2019ll play together:\n${url}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Reveal \u2013 Game for Couples',
+          text,
+          url
+        });
+        return;
+      }
+    } catch {
+      // Ignore share errors and fall through to clipboard/WhatsApp fallback
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Reminder text copied. Paste it into WhatsApp or your favorite chat.');
+      return;
+    } catch {
+      const encoded = encodeURIComponent(text);
+      window.location.href = `https://wa.me/?text=${encoded}`;
+    }
+  };
+
   return (
     <div className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
       <div className="animate-slide-up">
@@ -176,6 +203,13 @@ export function LandingPage() {
               Free to play
             </p>
           )}
+          <button
+            className="btn btn--secondary btn--full"
+            onClick={handleSendReminder}
+            style={{ marginTop: '12px' }}
+          >
+            Send to partner to play later
+          </button>
         </div>
 
         {/* Test Payment Button */}
