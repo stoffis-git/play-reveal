@@ -1994,25 +1994,26 @@ h3 {
 }
 
 .menu-panel {
-  position: absolute;
+  position: fixed;
   top: 0;
-  right: 0;
+  left: 0;
   bottom: 0;
   width: 280px;
   max-width: 85vw;
   background: white;
-  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.15);
   overflow-y: auto;
   overflow-x: hidden;
-  animation: slideInRight 0.3s ease;
+  animation: slideInLeft 0.3s ease;
   display: flex;
   flex-direction: column;
+  z-index: 200;
 }
 
-@keyframes slideInRight {
+@keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateX(-100%);
   }
   to {
     opacity: 1;

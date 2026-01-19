@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard } from '../store';
+import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard, getScoreTier } from '../store';
 import { Menu } from './Menu';
 import { themeColors } from '../types';
 
 export function Round1Results() {
   const { state, dispatch } = useGame();
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set());
-  const [showConfirmExit, setShowConfirmExit] = useState(false);
 
   // Handle case where user accesses this screen without playing Round 1
   // (e.g., from landing page test button)
@@ -15,6 +14,7 @@ export function Round1Results() {
   const mismatchedCards = hasRound1Data ? getMismatchedCards(state.round1Cards) : [];
   const themeSummaries = hasRound1Data ? getThemeSummaries(state.round1Cards) : [];
   const matchCount = hasRound1Data ? getMatchCount(state.round1Cards) : 0;
+  const tier = hasRound1Data ? getScoreTier(matchCount, 15) : null;
   
   // Get strength and growth themes
   const strengthThemes = themeSummaries
@@ -45,49 +45,9 @@ export function Round1Results() {
   };
 
   const handleMaybeLater = () => {
-    setShowConfirmExit(true);
+    // Just navigate to landing without resetting progress
+    dispatch({ type: 'NAVIGATE_TO', screen: 'landing' });
   };
-
-  const handleConfirmExit = () => {
-    dispatch({ type: 'RESET_GAME' });
-  };
-
-  if (showConfirmExit) {
-    return (
-      <div className="container animate-fade-in" style={{ 
-        minHeight: '100vh', 
-        display: 'flex', 
-        flexDirection: 'column', 
-        justifyContent: 'center',
-        textAlign: 'center'
-      }}>
-        <div style={{ fontSize: '3rem', marginBottom: '24px' }}>🤔</div>
-        <h2 style={{ marginBottom: '16px' }}>Are you sure?</h2>
-        <p style={{ 
-          color: 'var(--text-secondary)', 
-          marginBottom: '32px',
-          maxWidth: '300px',
-          margin: '0 auto 32px'
-        }}>
-          You can't return to these results without replaying Round 1.
-        </p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          <button
-            className="btn btn--accent btn--full"
-            onClick={() => setShowConfirmExit(false)}
-          >
-            No, unlock Round 2
-          </button>
-          <button
-            className="btn btn--ghost"
-            onClick={handleConfirmExit}
-          >
-            Yes, exit
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container paywall animate-slide-up" style={{ paddingBottom: '40px' }}>
@@ -114,10 +74,18 @@ export function Round1Results() {
         </div>
         
         {hasRound1Data && (
-          <div className="results-score" style={{ marginBottom: '16px' }}>
-            <div className="results-score__number">{matchCount}/15</div>
-            <div className="results-score__label">in sync</div>
-          </div>
+          <>
+            <div className="results-score" style={{ marginBottom: '16px' }}>
+              <div className="results-score__number">{matchCount}/15</div>
+              <div className="results-score__label">in sync</div>
+            </div>
+            {tier && (
+              <div className="results-tier" style={{ marginBottom: '16px' }}>
+                <div className="results-tier__name">{tier.tier}</div>
+                <p className="results-tier__desc">{tier.description}</p>
+              </div>
+            )}
+          </>
         )}
       </div>
 
