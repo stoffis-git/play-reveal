@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGame, getMatchCount, getThemeSummaries, getQuestionForCard } from '../store';
+import { Menu } from './Menu';
 import { themeColors } from '../types';
 import type { Card, ThemeSummary } from '../types';
 import { getInsightForQuestion } from '../insights';
@@ -228,6 +229,11 @@ export function FinalResults() {
 
   return (
     <div className="container animate-slide-up" style={{ paddingBottom: '40px' }}>
+      {/* Header with menu */}
+      <div className="game-header" style={{ marginBottom: '24px' }}>
+        <Menu buttonPosition="inline" />
+        <div style={{ flex: 1 }}></div>
+      </div>
       {/* Header */}
       <div className="results-header">
         <div style={{ 

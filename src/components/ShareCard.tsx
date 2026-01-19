@@ -1,5 +1,6 @@
 import { useRef } from 'react';
 import { useGame, getMatchCount } from '../store';
+import { Menu } from './Menu';
 
 export function ShareCard() {
   const { state, dispatch } = useGame();
@@ -55,6 +56,11 @@ export function ShareCard() {
       flexDirection: 'column',
       justifyContent: 'center'
     }}>
+      {/* Header with menu */}
+      <div className="game-header" style={{ marginBottom: '24px', position: 'absolute', top: '8px', left: '12px', right: '12px' }}>
+        <Menu buttonPosition="inline" />
+        <div style={{ flex: 1 }}></div>
+      </div>
       <div className="text-center mb-6">
         <h2>Share Your Score</h2>
         <p style={{ color: 'var(--text-secondary)' }}>

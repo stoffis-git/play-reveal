@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard } from '../store';
+import { Menu } from './Menu';
 import { themeColors } from '../types';
 import { getInsightForQuestion } from '../insights';
 
@@ -76,6 +77,12 @@ export function Paywall() {
 
   return (
     <div className="container paywall animate-slide-up" style={{ paddingBottom: '40px' }}>
+      {/* Header with menu */}
+      <div className="game-header" style={{ marginBottom: '24px' }}>
+        <Menu buttonPosition="inline" />
+        <div style={{ flex: 1 }}></div>
+      </div>
+
       {/* Score Summary Header */}
       <div className="results-header" style={{ marginBottom: '32px' }}>
         <div style={{ 

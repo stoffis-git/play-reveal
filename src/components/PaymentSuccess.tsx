@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useGame } from '../store';
+import { Menu } from './Menu';
 
 export function PaymentSuccess() {
   const { state, dispatch } = useGame();
@@ -43,6 +44,11 @@ export function PaymentSuccess() {
       justifyContent: 'center',
       textAlign: 'center'
     }}>
+      {/* Header with menu */}
+      <div className="game-header" style={{ marginBottom: '24px', position: 'absolute', top: '8px', left: '12px', right: '12px' }}>
+        <Menu buttonPosition="inline" />
+        <div style={{ flex: 1 }}></div>
+      </div>
       {isProcessing ? (
         <>
           <div style={{ fontSize: '4rem', marginBottom: '24px' }}>

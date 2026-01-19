@@ -9,6 +9,11 @@ export function LandingPage() {
   const [partner2Name, setPartner2Name] = useState('');
   const [error, setError] = useState('');
 
+  // Scroll to top on mount/refresh
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
+
   // Load names from localStorage on mount
   useEffect(() => {
     try {
@@ -62,6 +67,7 @@ export function LandingPage() {
         {/* Hero */}
         <div className="text-center mb-8">
           <div style={{ 
+            marginTop: '15px',
             marginBottom: '16px', 
             display: 'flex', 
             justifyContent: 'center',
