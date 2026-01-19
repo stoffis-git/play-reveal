@@ -446,6 +446,12 @@ h3 {
   opacity: 0.5;
 }
 
+/* Remove opacity effect for revealed cards (answered by both players) */
+.game-card--matched.game-card--disabled,
+.game-card--different.game-card--disabled {
+  opacity: 1;
+}
+
 .game-card--disabled:hover {
   transform: none;
 }
