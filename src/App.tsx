@@ -5,13 +5,14 @@ import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults, Sh
 function GameRouter() {
   const { state, dispatch } = useGame();
 
-  // Handle payment return detection (works even if Polar doesn't redirect)
+  // Handle payment return from Polar redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
-    const screen = urlParams.get('screen');
+    const screen = urlParams.get('screen')?.trim();
     
-    // Method 1: Explicit payment success URL (if Polar redirects work)
+    // Polar redirects to: https://playreveal.com?screen=paymentSuccess&checkout_id={CHECKOUT_ID}
     if (screen === 'paymentSuccess') {
+      // Store checkout_id if provided by Polar (Polar replaces {CHECKOUT_ID} with actual ID)
       const checkoutId = urlParams.get('checkout_id');
       if (checkoutId) {
         try {
@@ -21,15 +22,13 @@ function GameRouter() {
         }
       }
       
+      // Navigate to payment success screen
       dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      
+      // Clean up URL to remove query params (prevents re-triggering on refresh)
       window.history.replaceState({}, '', window.location.pathname);
-      return;
     }
-    
-    // Method 2: If user manually returns after payment (no redirect from Polar)
-    // Show them a way to continue - but don't auto-unlock (we can't verify payment without backend)
-    // The payment success screen will handle this with a manual button
-  }, [dispatch, state.round1Complete, state.hasPaid]);
+  }, [dispatch]);
 
   switch (state.currentScreen) {
     case 'landing':
