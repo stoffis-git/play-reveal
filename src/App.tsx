@@ -11,6 +11,17 @@ function GameRouter() {
     const screen = urlParams.get('screen');
     
     if (screen === 'paymentSuccess') {
+      // Store checkout_id in localStorage BEFORE cleaning URL
+      // PaymentSuccess will read from localStorage since URL is cleaned before it mounts
+      const checkoutId = urlParams.get('checkout_id');
+      if (checkoutId) {
+        try {
+          localStorage.setItem('reveal-checkout-id', checkoutId);
+        } catch {
+          // Ignore storage errors
+        }
+      }
+      
       dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
       // Clean up URL without refreshing
       window.history.replaceState({}, '', window.location.pathname);

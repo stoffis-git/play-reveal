@@ -8,19 +8,17 @@ export function PaymentSuccess() {
   const [isProcessing, setIsProcessing] = useState(true);
 
   useEffect(() => {
-    // Get checkout_id from URL params
-    const urlParams = new URLSearchParams(window.location.search);
-    const id = urlParams.get('checkout_id');
+    // Read checkout_id from localStorage (App.tsx stores it there before cleaning URL)
+    // This is more reliable than reading from URL since App.tsx cleans it before we mount
+    let id: string | null = null;
+    try {
+      id = localStorage.getItem('reveal-checkout-id');
+    } catch {
+      // Ignore storage errors
+    }
     
     if (id) {
       setCheckoutId(id);
-      
-      // Store the checkout ID in localStorage for record keeping
-      try {
-        localStorage.setItem('reveal-checkout-id', id);
-      } catch {
-        // Ignore storage errors
-      }
     }
 
     let startRound2Timer: number | null = null;
