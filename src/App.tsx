@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { GameProvider, useGame } from './store';
-import { LandingPage, GameBoard, Round1Results, Paywall, PaymentSuccess, FinalResults, ShareCard } from './components';
+import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults, ShareCard } from './components';
 
 function GameRouter() {
   const { state, dispatch } = useGame();
@@ -25,7 +25,8 @@ function GameRouter() {
     case 'round1Results':
       return <Round1Results />;
     case 'paywall':
-      return <Paywall />;
+      // Redirect paywall to round1Results (single unlock screen)
+      return <Round1Results />;
     case 'paymentSuccess':
       return <PaymentSuccess />;
     case 'round2':

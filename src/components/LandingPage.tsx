@@ -185,7 +185,7 @@ export function LandingPage() {
         }}>
           <button
             className="btn btn--accent btn--full"
-            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'paywall' })}
+            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'round1Results' })}
             style={{
               maxWidth: '400px',
               margin: '0 auto',

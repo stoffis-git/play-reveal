@@ -8,9 +8,13 @@ export function Round1Results() {
   const [expandedThemes, setExpandedThemes] = useState<Set<string>>(new Set());
   const [showConfirmExit, setShowConfirmExit] = useState(false);
 
-  const mismatchedCards = getMismatchedCards(state.round1Cards);
-  const themeSummaries = getThemeSummaries(state.round1Cards);
-  const matchCount = getMatchCount(state.round1Cards);
+  // Handle case where user accesses this screen without playing Round 1
+  // (e.g., from landing page test button)
+  const hasRound1Data = state.round1Cards.length > 0;
+  
+  const mismatchedCards = hasRound1Data ? getMismatchedCards(state.round1Cards) : [];
+  const themeSummaries = hasRound1Data ? getThemeSummaries(state.round1Cards) : [];
+  const matchCount = hasRound1Data ? getMatchCount(state.round1Cards) : 0;
   
   // Get strength and growth themes
   const strengthThemes = themeSummaries
@@ -109,10 +113,12 @@ export function Round1Results() {
           ROUND 1 ANALYSIS
         </div>
         
-        <div className="results-score" style={{ marginBottom: '16px' }}>
-          <div className="results-score__number">{matchCount}/15</div>
-          <div className="results-score__label">in sync</div>
-        </div>
+        {hasRound1Data && (
+          <div className="results-score" style={{ marginBottom: '16px' }}>
+            <div className="results-score__number">{matchCount}/15</div>
+            <div className="results-score__label">in sync</div>
+          </div>
+        )}
       </div>
 
       {/* Strengths Preview */}
@@ -163,8 +169,8 @@ export function Round1Results() {
         </div>
       )}
 
-      {/* Growth Areas with Expandable Tiles */}
-      {growthThemes.length > 0 && (
+      {/* Growth Areas with Expandable Tiles - only show if we have Round 1 data */}
+      {hasRound1Data && growthThemes.length > 0 && (
         <div style={{ marginBottom: '32px' }}>
           <h4 style={{ 
             fontSize: '0.9rem', 
