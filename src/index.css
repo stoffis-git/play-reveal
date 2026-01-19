@@ -61,7 +61,10 @@ body {
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--bg-gradient);
   color: var(--text-primary);
-  min-height: 100vh;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -69,17 +72,17 @@ body {
   overflow-y: hidden;
   width: 100%;
   position: relative;
+}
+
+#root {
   height: 100vh;
   height: 100dvh;
   max-height: 100vh;
   max-height: 100dvh;
-}
-
-#root {
-  min-height: 100vh;
   display: flex;
   flex-direction: column;
   overflow-x: hidden;
+  overflow-y: hidden;
   width: 100%;
 }
 
