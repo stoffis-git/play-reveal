@@ -25,8 +25,7 @@ export function Round1Results() {
     .sort((a, b) => a.matchPercentage - b.matchPercentage);
 
   const handleUnlock = () => {
-    // Store payment initiation flag in localStorage
-    // This allows us to detect when user returns from payment, even if Polar doesn't redirect
+    // Store payment initiation flag (so we can show "I've paid" button when they return)
     try {
       localStorage.setItem('reveal-payment-initiated', 'true');
       localStorage.setItem('reveal-payment-initiated-time', Date.now().toString());
@@ -34,13 +33,46 @@ export function Round1Results() {
       // Ignore storage errors
     }
     
-    // Polar checkout link - note: success_url must be configured in Polar dashboard/API
-    // Query param success_url doesn't work with checkout links
+    // Polar checkout link
+    // IMPORTANT: You MUST configure success_url in Polar dashboard for this link:
+    // Go to Polar dashboard → Products → Checkout Links → Edit this link
+    // Set success_url to: https://playreveal.com?screen=paymentSuccess
+    // Without this, users will be stuck on Polar's payment success page with no return button
     const polarCheckoutUrl = `https://buy.polar.sh/polar_cl_nJ2vx1fXaiRId4N9pKEu6Gg92x9SCbZhcJy6n0hhaJu`;
     
     // Redirect to Polar checkout
     window.location.href = polarCheckoutUrl;
   };
+
+  const handleManualUnlock = () => {
+    // User manually confirms they've paid (trust-based, no backend verification)
+    dispatch({ type: 'COMPLETE_PAYMENT' });
+    // Clear the flag
+    try {
+      localStorage.removeItem('reveal-payment-initiated');
+      localStorage.removeItem('reveal-payment-initiated-time');
+    } catch {
+      // Ignore storage errors
+    }
+    // Navigate to payment success screen, which will auto-start Round 2
+    dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+  };
+
+  // Check if user returned after initiating payment
+  const hasPaymentInitiated = (() => {
+    try {
+      const flag = localStorage.getItem('reveal-payment-initiated');
+      const time = localStorage.getItem('reveal-payment-initiated-time');
+      if (flag === 'true' && time) {
+        const timeSince = Date.now() - parseInt(time, 10);
+        // Only show button if payment was initiated within last 30 minutes
+        return timeSince < 30 * 60 * 1000;
+      }
+    } catch {
+      // Ignore storage errors
+    }
+    return false;
+  })();
 
   const handleMaybeLater = () => {
     // Just navigate to landing without resetting progress
@@ -335,22 +367,58 @@ export function Round1Results() {
       </div>
 
       {/* CTAs */}
-      <button
-        className="btn btn--accent btn--full"
-        onClick={handleUnlock}
-        style={{ marginBottom: '12px' }}
-      >
-        ✨ Unlock Round 2 — $4.99
-      </button>
-      <p style={{ 
-        fontSize: '0.7rem', 
-        color: 'var(--text-muted)', 
-        textAlign: 'center',
-        marginTop: '8px',
-        fontStyle: 'italic'
-      }}>
-        After payment, return here and Round 2 will unlock automatically
-      </p>
+      {!state.hasPaid && (
+        <>
+          {hasPaymentInitiated ? (
+            // User returned after payment - show manual unlock button
+            <div style={{ marginBottom: '12px' }}>
+              <button
+                className="btn btn--accent btn--full"
+                onClick={handleManualUnlock}
+                style={{ marginBottom: '8px' }}
+              >
+                ✅ I've completed payment - Unlock Round 2
+              </button>
+              <p style={{ 
+                fontSize: '0.7rem', 
+                color: 'var(--text-muted)', 
+                textAlign: 'center',
+                fontStyle: 'italic'
+              }}>
+                Returned from payment? Click above to unlock Round 2
+              </p>
+            </div>
+          ) : (
+            // Normal unlock button
+            <>
+              <button
+                className="btn btn--accent btn--full"
+                onClick={handleUnlock}
+                style={{ marginBottom: '12px' }}
+              >
+                ✨ Unlock Round 2 — $4.99
+              </button>
+              <div style={{
+                background: 'rgba(224, 29, 148, 0.1)',
+                borderRadius: '12px',
+                padding: '12px',
+                marginTop: '8px',
+                border: '1px solid rgba(224, 29, 148, 0.2)'
+              }}>
+                <p style={{ 
+                  fontSize: '0.7rem', 
+                  color: 'var(--text-secondary)', 
+                  textAlign: 'center',
+                  margin: 0,
+                  fontWeight: '500'
+                }}>
+                  ⚠️ After payment, return here and click "I've completed payment"
+                </p>
+              </div>
+            </>
+          )}
+        </>
+      )}
       
       <button
         className="btn btn--ghost"
