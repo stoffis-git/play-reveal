@@ -61,7 +61,13 @@ export function LandingPage() {
       <div className="animate-slide-up">
         {/* Hero */}
         <div className="text-center mb-8">
-          <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+          <div style={{ 
+            marginBottom: '16px', 
+            display: 'flex', 
+            justifyContent: 'center',
+            alignItems: 'center',
+            gap: '12px'
+          }}>
             <img 
               src="/reveal_icon.png" 
               alt="Reveal Logo" 
@@ -71,10 +77,13 @@ export function LandingPage() {
                 objectFit: 'contain'
               }} 
             />
+            <h1 style={{ 
+              marginBottom: 0,
+              color: '#D81B60'
+            }}>
+              Reveal
+            </h1>
           </div>
-          <h1 style={{ marginBottom: '16px' }}>
-            Reveal
-          </h1>
           <p style={{ fontSize: '1.1rem', color: 'var(--text-secondary)', maxWidth: '400px', margin: '0 auto', fontWeight: '500' }}>
             Discover how in-sync you really are
           </p>
