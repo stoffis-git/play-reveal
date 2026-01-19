@@ -39,7 +39,7 @@ export function Round1Results() {
   };
 
   return (
-    <div className="container paywall animate-slide-up" style={{ paddingBottom: '40px' }}>
+    <div className="container paywall animate-slide-up" style={{ paddingBottom: '10px' }}>
       {/* Header with menu */}
       <div className="game-header" style={{ marginBottom: '0px' }}>
         <Menu buttonPosition="inline" />
@@ -235,7 +235,7 @@ export function Round1Results() {
                       fontWeight: '600',
                       color: 'var(--partner1)'
                     }}>
-                      🔒 Unlock in Round 2
+                      🔒 Unlock below
                     </span>
                   </div>
                 </div>
@@ -266,13 +266,7 @@ export function Round1Results() {
           }}>
             Ready for Round 2?
           </h3>
-          //<p style={{ 
-            fontSize: '0.9rem',
-            color: 'var(--text-secondary)',
-            marginBottom: '16px'
-          }}>
-            Get 15 personalized deep-dive questions tailored to YOUR differences, complete relationship insights, and action items for growth
-          </p>
+      
         </div>
         
         <div style={{ 
@@ -318,10 +312,9 @@ export function Round1Results() {
         }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
             {[
-              { icon: '🎴', text: '15 personalized questions' },
-              { icon: '💬', text: 'Conversation starters for each mismatch' },
-              { icon: '📊', text: 'Complete relationship insights' },
-              { icon: '🎯', text: 'Action items for growth' }
+              { icon: '🎴', text: '15 more questions. Based on your previous matches!' },
+              { icon: '📊', text: 'Complete relationship insights.' }, 
+              { icon: '💬', text: 'Full onversation starters with deep dives.' },
             ].map((item, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span>{item.icon}</span>
