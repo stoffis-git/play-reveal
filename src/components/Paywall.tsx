@@ -328,7 +328,7 @@ export function Paywall() {
       {/* Price box */}
       <div className="paywall__price-box">
         <div className="paywall__price-title">ROUND 2: DEEP DIVE</div>
-        <div className="paywall__price">$7.99</div>
+        <div className="paywall__price">$4.99</div>
         <div className="paywall__price-subtitle">One-time payment • No subscription</div>
       </div>
 
@@ -338,7 +338,7 @@ export function Paywall() {
         onClick={handleUnlock}
         style={{ marginBottom: '12px' }}
       >
-        ✨ Unlock Round 2 — $7.99
+        ✨ Unlock Round 2 — $4.99
       </button>
       
       <button
