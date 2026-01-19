@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { GameProvider, useGame } from './store';
 import { LandingPage, GameBoard, Round1Results, Paywall, PaymentSuccess, FinalResults, ShareCard } from './components';
-import { Menu } from './components/Menu';
 
 function GameRouter() {
   const { state, dispatch } = useGame();
@@ -43,18 +42,9 @@ function GameRouter() {
 function App() {
   return (
     <GameProvider>
-      <MenuWrapper />
       <GameRouter />
     </GameProvider>
   );
-}
-
-function MenuWrapper() {
-  const { state } = useGame();
-  // Don't render Menu in App for game screens - GameBoard will render it inline
-  const isGameScreen = state.currentScreen === 'round1' || state.currentScreen === 'round2';
-  if (isGameScreen) return null;
-  return <Menu />;
 }
 
 export default App;

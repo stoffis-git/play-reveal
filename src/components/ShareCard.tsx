@@ -57,7 +57,7 @@ export function ShareCard() {
       justifyContent: 'center'
     }}>
       {/* Header with menu */}
-      <div className="game-header" style={{ marginBottom: '24px', position: 'absolute', top: '8px', left: '12px', right: '12px' }}>
+      <div className="game-header" style={{ marginBottom: '24px' }}>
         <Menu buttonPosition="inline" />
         <div style={{ flex: 1 }}></div>
       </div>

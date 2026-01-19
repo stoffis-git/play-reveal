@@ -115,35 +115,6 @@ export function Round1Results() {
         </div>
       </div>
 
-      {/* Relationship Map */}
-      <div style={{ marginBottom: '32px' }}>
-        <h3 style={{ marginBottom: '16px', fontSize: '1.1rem' }}>
-          📊 Your Round 1 Map
-        </h3>
-        {themeSummaries.map(summary => (
-          <div key={summary.theme} className="theme-bar" style={{ marginBottom: '8px' }}>
-            <div className="theme-bar__header">
-              <span className="theme-bar__name" style={{ color: themeColors[summary.theme] }}>
-                {summary.displayName}
-              </span>
-              <span className="theme-bar__score">{summary.matchPercentage}%</span>
-            </div>
-            <div className="theme-bar__track">
-              <div 
-                className={`theme-bar__fill ${
-                  summary.matchPercentage >= 80 
-                    ? 'theme-bar__fill--high' 
-                    : summary.matchPercentage >= 50 
-                      ? 'theme-bar__fill--medium' 
-                      : 'theme-bar__fill--low'
-                }`}
-                style={{ width: `${summary.matchPercentage}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* Strengths Preview */}
       {strengthThemes.length > 0 && (
         <div style={{ marginBottom: '24px' }}>
@@ -158,29 +129,34 @@ export function Round1Results() {
           }}>
             💪 Where You Sync
           </h4>
-          <div style={{
-            background: 'var(--match-green-light)',
-            borderRadius: '12px',
-            padding: '12px 16px'
-          }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {strengthThemes.map(theme => (
               <div 
                 key={theme.theme}
                 style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: '6px 0',
-                  borderBottom: '1px solid rgba(52, 199, 89, 0.2)'
+                  background: 'white',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  boxShadow: 'var(--card-shadow)',
+                  borderLeft: `4px solid ${themeColors[theme.theme]}`
                 }}
               >
-                <span style={{ fontSize: '0.9rem' }}>{theme.displayName}</span>
-                <span style={{ 
-                  fontSize: '0.9rem',
-                  fontWeight: '600',
-                  color: 'var(--match-green)' 
-                }}>
-                  {theme.matchPercentage}%
-                </span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ 
+                    fontWeight: '600',
+                    color: themeColors[theme.theme],
+                    fontSize: '0.9rem'
+                  }}>
+                    {theme.displayName}
+                  </span>
+                  <span style={{ 
+                    fontSize: '0.8rem',
+                    fontWeight: '600',
+                    color: 'var(--match-green)' 
+                  }}>
+                    {theme.matchPercentage}% aligned
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -322,20 +298,91 @@ export function Round1Results() {
         </div>
       )}
 
-      {/* Combined Unlock Banner */}
-      <div className="unlock-banner" style={{ marginBottom: '24px' }}>
-        <div className="unlock-banner__icon">✨</div>
-        <h3 className="unlock-banner__title">Ready for Round 2?</h3>
-        <p className="unlock-banner__text">
-          Get 15 personalized deep-dive questions tailored to YOUR differences, complete relationship insights, and action items for growth
-        </p>
-      </div>
+      {/* Combined Unlock Banner with Price and Features */}
+      <div style={{ 
+        background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
+        borderRadius: '16px',
+        padding: '24px',
+        marginBottom: '24px',
+        border: '2px solid var(--partner1)',
+        boxShadow: 'var(--card-shadow)'
+      }}>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
+          <h3 style={{ 
+            fontSize: '1.25rem',
+            fontWeight: '700',
+            marginBottom: '8px',
+            background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>
+            Ready for Round 2?
+          </h3>
+          <p style={{ 
+            fontSize: '0.9rem',
+            color: 'var(--text-secondary)',
+            marginBottom: '16px'
+          }}>
+            Get 15 personalized deep-dive questions tailored to YOUR differences, complete relationship insights, and action items for growth
+          </p>
+        </div>
+        
+        <div style={{ 
+          background: 'white',
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '16px'
+        }}>
+          <div style={{ 
+            fontSize: '0.75rem',
+            fontWeight: '700',
+            letterSpacing: '1px',
+            color: 'var(--text-secondary)',
+            marginBottom: '8px',
+            textAlign: 'center'
+          }}>
+            ROUND 2: DEEP DIVE
+          </div>
+          <div style={{ 
+            fontSize: '2rem',
+            fontWeight: '700',
+            textAlign: 'center',
+            background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            marginBottom: '4px'
+          }}>
+            $4.99
+          </div>
+          <div style={{ 
+            fontSize: '0.75rem',
+            color: 'var(--text-muted)',
+            textAlign: 'center'
+          }}>
+            One-time payment • No subscription
+          </div>
+        </div>
 
-      {/* Price box */}
-      <div className="paywall__price-box">
-        <div className="paywall__price-title">ROUND 2: DEEP DIVE</div>
-        <div className="paywall__price">$4.99</div>
-        <div className="paywall__price-subtitle">One-time payment • No subscription</div>
+        <div style={{ 
+          background: 'white',
+          borderRadius: '12px',
+          padding: '16px'
+        }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+            {[
+              { icon: '🎴', text: '15 personalized questions' },
+              { icon: '💬', text: 'Conversation starters for each mismatch' },
+              { icon: '📊', text: 'Complete relationship insights' },
+              { icon: '🎯', text: 'Action items for growth' }
+            ].map((item, i) => (
+              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span>{item.icon}</span>
+                <span>{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
 
       {/* CTAs */}
