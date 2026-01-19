@@ -52,13 +52,13 @@ export function Round1Results() {
   return (
     <div className="container paywall animate-slide-up" style={{ paddingBottom: '40px' }}>
       {/* Header with menu */}
-      <div className="game-header" style={{ marginBottom: '24px' }}>
+      <div className="game-header" style={{ marginBottom: '12px' }}>
         <Menu buttonPosition="inline" />
         <div style={{ flex: 1 }}></div>
       </div>
 
       {/* Score Summary Header */}
-      <div className="results-header" style={{ marginBottom: '32px' }}>
+      <div className="results-header" style={{ marginBottom: '20px' }}>
         <div style={{ 
           background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
           color: 'white',
@@ -80,7 +80,7 @@ export function Round1Results() {
               <div className="results-score__label">in sync</div>
             </div>
             {tier && (
-              <div className="results-tier" style={{ marginBottom: '16px' }}>
+              <div className="results-tier" style={{ marginBottom: '8px' }}>
                 <div className="results-tier__name">{tier.tier}</div>
                 <p className="results-tier__desc">{tier.description}</p>
               </div>
