@@ -131,6 +131,15 @@ export function LandingPage() {
           >
             Start Game
           </button>
+          <p style={{ 
+            fontSize: '0.75rem', 
+            color: 'var(--text-muted)', 
+            marginTop: '8px',
+            fontStyle: 'italic',
+            textAlign: 'center'
+          }}>
+            Free to play
+          </p>
         </div>
 
         {/* Test Payment Button */}

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useGame, getMatchCount, getThemeSummaries, getQuestionForCard } from '../store';
 import { themeColors } from '../types';
-import type { Card, Theme, ThemeSummary } from '../types';
+import type { Card, ThemeSummary } from '../types';
 import { getInsightForQuestion } from '../insights';
 
 // More granular score tiers

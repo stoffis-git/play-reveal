@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard } from '../store';
 import { themeColors } from '../types';
-import type { Theme } from '../types';
 import { getInsightForQuestion } from '../insights';
 
 export function Paywall() {
