@@ -49,6 +49,8 @@
 
 html {
   font-size: 16px;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 body {
@@ -59,12 +61,17 @@ body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  position: relative;
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Typography */
@@ -92,6 +99,8 @@ h3 {
   max-width: 600px;
   margin: 0 auto;
   padding: 24px 20px;
+  box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 .container--wide {
@@ -224,10 +233,12 @@ h3 {
   gap: 8px;
   padding: 4px;
   width: 100%;
+  max-width: 100%;
   margin: 0 auto;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 @media (max-width: 480px) {
@@ -254,6 +265,9 @@ h3 {
   width: 100%;
   margin: 0 auto;
   overflow: hidden;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  position: relative;
 }
 
 /* Game Card */
@@ -263,11 +277,12 @@ h3 {
   cursor: pointer;
   position: relative;
   transform-style: preserve-3d;
-  transition: transform var(--transition-medium), opacity var(--transition-fast);
+  transition: box-shadow var(--transition-medium), opacity var(--transition-fast);
   min-width: 0;
   min-height: 0;
   width: 100%;
   height: 100%;
+  box-sizing: border-box;
 }
 
 /* Face-down card with theme label */
@@ -282,19 +297,16 @@ h3 {
 }
 
 .game-card--facedown:hover {
-  transform: scale(1.04) translateY(-2px);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: 0 4px 20px rgba(139, 123, 168, 0.4);
 }
 
-/* Player-specific hover effects */
+/* Player-specific hover effects - simplified to just shadow */
 .game-card--facedown.game-card--player1:hover {
-  background: linear-gradient(145deg, var(--partner1-dark) 0%, var(--partner1) 100%);
-  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(255, 138, 108, 0.4);
 }
 
 .game-card--facedown.game-card--player2:hover {
-  background: linear-gradient(145deg, var(--partner2-dark) 0%, var(--partner2) 100%);
-  border-color: rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 20px rgba(178, 132, 224, 0.4);
 }
 
 /* Theme label inside card */
@@ -319,8 +331,7 @@ h3 {
 }
 
 .game-card--partner1-answered.game-card--player2:hover {
-  transform: scale(1.04) translateY(-2px);
-  box-shadow: 0 0 0 3px var(--partner2), var(--card-shadow-hover);
+  box-shadow: 0 4px 20px rgba(178, 132, 224, 0.4);
 }
 
 .game-card--partner2-answered {
@@ -334,8 +345,7 @@ h3 {
 }
 
 .game-card--partner2-answered.game-card--player1:hover {
-  transform: scale(1.04) translateY(-2px);
-  box-shadow: 0 0 0 3px var(--partner1), var(--card-shadow-hover);
+  box-shadow: 0 4px 20px rgba(255, 138, 108, 0.4);
 }
 
 .game-card--matched {
