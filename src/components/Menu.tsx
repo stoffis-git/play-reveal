@@ -61,9 +61,6 @@ export function Menu({ buttonPosition }: { buttonPosition?: 'inline' | 'fixed' }
       {isOpen && (
         <div className="menu-overlay" onClick={() => setIsOpen(false)}>
           <div className="menu-panel" onClick={e => e.stopPropagation()}>
-            <div className="menu-panel__header">
-              <span>💕</span> Menu
-            </div>
             <nav className="menu-panel__nav">
               <button className="menu-panel__item" onClick={handleHome}>
                 🏠 Back to Start
@@ -95,7 +92,10 @@ export function Menu({ buttonPosition }: { buttonPosition?: 'inline' | 'fixed' }
             </nav>
             <div className="menu-panel__footer">
               {state.hasPaid && <span className="menu-panel__badge">✨ Premium</span>}
-              <span>Reveal</span>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                <img src="/reveal_icon.png" alt="Reveal" style={{ width: '16px', height: '16px' }} />
+                <span>Reveal</span>
+              </div>
             </div>
           </div>
         </div>

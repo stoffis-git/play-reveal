@@ -440,7 +440,20 @@ h3 {
 
 .game-card--disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+  background: linear-gradient(145deg, #D0D0D0 0%, #B8B8B8 100%) !important;
+  border-color: #A0A0A0 !important;
+  opacity: 0.6;
+}
+
+/* Ensure player indicator dots remain fully visible on disabled cards */
+.game-card--disabled.game-card--partner1-answered::after {
+  opacity: 1 !important;
+  background: var(--partner1) !important;
+}
+
+.game-card--disabled.game-card--partner2-answered::after {
+  opacity: 1 !important;
+  background: var(--partner2) !important;
 }
 
 .game-card--disabled:hover {
@@ -578,6 +591,7 @@ h3 {
 /* Dynamic Progress Lever Bar */
 .progress-lever {
   margin-bottom: 6px;
+  margin-top: 4px;
 }
 
 .progress-lever__bar {
@@ -619,14 +633,6 @@ h3 {
   color: var(--match-green);
 }
 
-.progress-lever__counter {
-  font-weight: 700;
-  color: var(--text-primary);
-  background: white;
-  padding: 2px 8px;
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
 
 /* Question Modal */
 .question-overlay {
@@ -1912,6 +1918,17 @@ h3 {
   justify-content: center;
 }
 
+.progress-counter-header {
+  font-weight: 700;
+  color: var(--text-primary);
+  background: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 0.65rem;
+  flex-shrink: 0;
+}
+
 /* Menu */
 .menu-burger {
   width: 36px;
@@ -1982,39 +1999,34 @@ h3 {
 
 .menu-panel {
   position: absolute;
-  top: 56px;
-  right: 12px;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
   background: white;
-  border-radius: 16px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
-  min-width: 200px;
-  overflow: hidden;
-  animation: slideDown 0.2s ease;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  overflow-y: auto;
+  overflow-x: hidden;
+  animation: slideInRight 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
-@keyframes slideDown {
+@keyframes slideInRight {
   from {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateX(100%);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateX(0);
   }
-}
-
-.menu-panel__header {
-  padding: 16px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  border-bottom: 1px solid var(--bg-secondary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .menu-panel__nav {
   padding: 8px;
+  flex: 1;
 }
 
 .menu-panel__item {
@@ -2047,6 +2059,7 @@ h3 {
   flex-direction: column;
   align-items: center;
   gap: 4px;
+  margin-top: auto;
 }
 
 .menu-panel__divider {

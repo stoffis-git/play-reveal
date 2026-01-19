@@ -219,7 +219,7 @@ export function GameBoard({ round }: GameBoardProps) {
         </div>
       )}
 
-      {/* Header with menu and turn indicator */}
+      {/* Header with menu, turn indicator, and progress counter */}
       <div className="game-header">
         <Menu buttonPosition="inline" />
         <div className="turn-indicator-wrapper">
@@ -227,6 +227,9 @@ export function GameBoard({ round }: GameBoardProps) {
             <span className="turn-indicator__dot"></span>
             {currentPlayerName.toUpperCase()}'S TURN
           </div>
+        </div>
+        <div className="progress-counter-header">
+          {revealedCount}/15
         </div>
       </div>
 
@@ -245,9 +248,6 @@ export function GameBoard({ round }: GameBoardProps) {
         <div className="progress-lever__labels">
           <span className="progress-lever__label progress-lever__label--diff">
             {diffCount} Different
-          </span>
-          <span className="progress-lever__counter">
-            {revealedCount}/15
           </span>
           <span className="progress-lever__label progress-lever__label--sync">
             {matchCount} In Sync
