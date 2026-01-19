@@ -10,9 +10,10 @@ function GameRouter() {
     const urlParams = new URLSearchParams(window.location.search);
     const screen = urlParams.get('screen')?.trim();
     
-    // Polar redirects to: https://playreveal.com?screen=paymentSuccess&checkout_id={CHECKOUT_ID}
+    // Polar redirects to: https://playreveal.com?screen=paymentSuccess
+    // Optional: &checkout_id={CHECKOUT_ID} if you include {CHECKOUT_ID} in success_url
     if (screen === 'paymentSuccess') {
-      // Store checkout_id if provided by Polar (Polar replaces {CHECKOUT_ID} with actual ID)
+      // Store checkout_id if provided by Polar
       const checkoutId = urlParams.get('checkout_id');
       if (checkoutId) {
         try {

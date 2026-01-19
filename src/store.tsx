@@ -192,8 +192,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return {
         ...state,
-        hasPaid: true,
-        currentScreen: 'round2'
+        hasPaid: true
+        // Don't change currentScreen here - let PaymentSuccess component handle navigation
       };
 
     case 'START_ROUND_2': {
