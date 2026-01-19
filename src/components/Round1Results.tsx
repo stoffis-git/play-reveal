@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard } from '../store';
 import { Menu } from './Menu';
 import { themeColors } from '../types';
-import { getInsightForQuestion } from '../insights';
 
 export function Round1Results() {
   const { state, dispatch } = useGame();
