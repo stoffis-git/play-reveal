@@ -5,6 +5,25 @@ import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults, Sh
 function GameRouter() {
   const { state, dispatch } = useGame();
 
+  // Prevent zoom on screen changes - reset viewport scale
+  useEffect(() => {
+    const resetViewport = () => {
+      // Reset viewport scale to prevent zoom
+      const viewport = document.querySelector('meta[name="viewport"]');
+      if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+      }
+    };
+
+    // Reset on screen change
+    resetViewport();
+
+    // Also reset after a short delay to catch any delayed layout changes
+    const timer = setTimeout(resetViewport, 100);
+
+    return () => clearTimeout(timer);
+  }, [state.currentScreen]);
+
   // Handle payment return from Polar redirect
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);

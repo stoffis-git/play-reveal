@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/reveal_favicon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>Reveal - The Game for Couples</title>
     
     <!-- Primary Meta Tags -->
@@ -26,6 +26,36 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // Prevent zoom on page load and touch events
+      (function() {
+        // Reset viewport scale on load
+        function resetZoom() {
+          const viewport = document.querySelector('meta[name="viewport"]');
+          if (viewport) {
+            viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+          }
+        }
+        
+        // Reset on load
+        resetZoom();
+        
+        // Reset on orientation change
+        window.addEventListener('orientationchange', function() {
+          setTimeout(resetZoom, 100);
+        });
+        
+        // Prevent double-tap zoom
+        let lastTouchEnd = 0;
+        document.addEventListener('touchend', function(event) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+          }
+          lastTouchEnd = now;
+        }, false);
+      })();
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
