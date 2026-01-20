@@ -14,6 +14,8 @@ const STORAGE_KEY = 'relationship-game-state';
 // - Uses incognito/private mode (payment won't persist across sessions)
 // - Browser storage quota is exceeded and localStorage is cleared
 const PAYMENT_STORAGE_KEY = 'relationship-game-payment-status';
+// Separate key for partner names to persist across sessions
+const NAMES_STORAGE_KEY = 'relationship-game-partner-names';
 
 type GameAction =
   | { type: 'START_GAME'; partner1Name: string; partner2Name: string }
@@ -61,6 +63,15 @@ const initialState: GameState = {
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
     case 'START_GAME':
+      // Persist names separately so they survive across sessions
+      try {
+        localStorage.setItem(NAMES_STORAGE_KEY, JSON.stringify({
+          partner1Name: action.partner1Name,
+          partner2Name: action.partner2Name
+        }));
+      } catch {
+        // Ignore storage errors
+      }
       return {
         ...state,
         sessionId: uuidv4(),
@@ -328,6 +339,18 @@ function loadPersistedState(): Partial<GameState> | null {
         // Ignore payment storage errors
       }
       
+      // Also check for partner names in separate storage (persists across new sessions)
+      try {
+        const namesStored = localStorage.getItem(NAMES_STORAGE_KEY);
+        if (namesStored) {
+          const names = JSON.parse(namesStored);
+          if (names.partner1Name) parsed.partner1Name = names.partner1Name;
+          if (names.partner2Name) parsed.partner2Name = names.partner2Name;
+        }
+      } catch {
+        // Ignore names storage errors
+      }
+      
       return parsed;
     }
   } catch {
@@ -365,17 +388,32 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Load persisted state on initialization
     const persisted = loadPersistedState();
     
-    // If no session but payment exists, restore payment status
+    // If no session but payment or names exist, restore them
     if (!persisted || !persisted.sessionId) {
+      let restored = { ...initial };
+      
       try {
         const paymentStatus = localStorage.getItem(PAYMENT_STORAGE_KEY);
         if (paymentStatus === 'true') {
-          return { ...initial, hasPaid: true } as GameState;
+          restored.hasPaid = true;
         }
       } catch {
         // Ignore payment storage errors
       }
-      return initial;
+      
+      // Always try to restore names from separate storage
+      try {
+        const namesStored = localStorage.getItem(NAMES_STORAGE_KEY);
+        if (namesStored) {
+          const names = JSON.parse(namesStored);
+          if (names.partner1Name) restored.partner1Name = names.partner1Name;
+          if (names.partner2Name) restored.partner2Name = names.partner2Name;
+        }
+      } catch {
+        // Ignore names storage errors
+      }
+      
+      return restored as GameState;
     }
     
     return { ...initial, ...persisted } as GameState;
