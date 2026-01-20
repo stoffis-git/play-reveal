@@ -80,6 +80,11 @@ export function Round1Results() {
     dispatch({ type: 'NAVIGATE_TO', screen: 'landing' });
   };
 
+  const handleStartRound2 = () => {
+    // User has already paid, navigate directly to Round 2
+    dispatch({ type: 'START_ROUND_2' });
+  };
+
   return (
     <div className="container paywall animate-slide-up" style={{ paddingBottom: '10px' }}>
       {/* Header with menu */}
@@ -287,88 +292,108 @@ export function Round1Results() {
         </div>
       )}
 
-      {/* Combined Unlock Banner with Price and Features */}
-      <div style={{ 
-        background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
-        borderRadius: '16px',
-        padding: '24px',
-        marginBottom: '24px',
-        border: '2px solid var(--partner1)',
-        boxShadow: 'var(--card-shadow)'
-      }}>
-        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-          <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
-          <h3 style={{ 
-            fontSize: '1.25rem',
-            fontWeight: '700',
-            marginBottom: '8px',
-            background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
-          }}>
-            Ready for Round 2?
-          </h3>
+      {/* Combined Unlock Banner with Price and Features - only show if not paid */}
+      {!state.hasPaid && (
+        <div style={{ 
+          background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
+          borderRadius: '16px',
+          padding: '24px',
+          marginBottom: '24px',
+          border: '2px solid var(--partner1)',
+          boxShadow: 'var(--card-shadow)'
+        }}>
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✨</div>
+            <h3 style={{ 
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              marginBottom: '8px',
+              background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              Ready for Round 2?
+            </h3>
       
-        </div>
-        
-        <div style={{ 
-          background: 'white',
-          borderRadius: '12px',
-          padding: '16px',
-          marginBottom: '16px'
-        }}>
-          <div style={{ 
-            fontSize: '0.75rem',
-            fontWeight: '700',
-            letterSpacing: '1px',
-            color: 'var(--text-secondary)',
-            marginBottom: '8px',
-            textAlign: 'center'
-          }}>
-            ROUND 2: DEEP DIVE & ANALYSIS
           </div>
+          
           <div style={{ 
-            fontSize: '2rem',
-            fontWeight: '700',
-            textAlign: 'center',
-            background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            marginBottom: '4px'
+            background: 'white',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px'
           }}>
-            $4.99
+            <div style={{ 
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              letterSpacing: '1px',
+              color: 'var(--text-secondary)',
+              marginBottom: '8px',
+              textAlign: 'center'
+            }}>
+              ROUND 2: DEEP DIVE & ANALYSIS
+            </div>
+            <div style={{ 
+              fontSize: '2rem',
+              fontWeight: '700',
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '4px'
+            }}>
+              $4.99
+            </div>
+            <div style={{ 
+              fontSize: '0.75rem',
+              color: 'var(--text-muted)',
+              textAlign: 'center'
+            }}>
+              One-time payment • No subscription
+            </div>
           </div>
-          <div style={{ 
-            fontSize: '0.75rem',
-            color: 'var(--text-muted)',
-            textAlign: 'center'
-          }}>
-            One-time payment • No subscription
-          </div>
-        </div>
 
-        <div style={{ 
-          background: 'white',
-          borderRadius: '12px',
-          padding: '16px'
-        }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
-            {[
-              { icon: '🎴', text: '+ 15 questions based on your round 1.' },
-              { icon: '📊', text: 'Complete relationship insights.' }, 
-              { icon: '💬', text: 'Full conversation starters with deep dives.' },
-            ].map((item, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span>{item.icon}</span>
-                <span>{item.text}</span>
-              </div>
-            ))}
+          <div style={{ 
+            background: 'white',
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+              {[
+                { icon: '🎴', text: '+ 15 questions based on your round 1.' },
+                { icon: '📊', text: 'Complete relationship insights.' }, 
+                { icon: '💬', text: 'Full conversation starters with deep dives.' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span>{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* CTAs */}
-      {!state.hasPaid && (
+      {state.hasPaid ? (
+        // User has already paid - show direct Round 2 button
+        <>
+          <button
+            className="btn btn--accent btn--full"
+            onClick={handleStartRound2}
+            style={{ marginBottom: '12px' }}
+          >
+            🚀 Start Round 2
+          </button>
+          <button
+            className="btn btn--ghost"
+            onClick={handleMaybeLater}
+          >
+            Maybe Later
+          </button>
+        </>
+      ) : (
+        // User hasn't paid - show payment options
         <>
           {hasPaymentInitiated ? (
             // User returned after payment - show manual unlock button
@@ -391,29 +416,28 @@ export function Round1Results() {
               </button>
             </>
           )}
+          <button
+            className="btn btn--ghost"
+            onClick={handleMaybeLater}
+          >
+            Maybe Later
+          </button>
+
+          {/* Trust indicators - only show for unpaid users */}
+          <div className="text-center mt-6" style={{ 
+            fontSize: '0.75rem', 
+            color: 'var(--text-muted)',
+            display: 'flex',
+            justifyContent: 'center',
+            gap: '16px',
+            flexWrap: 'wrap',
+            marginTop: '16px'
+          }}>
+            <span>🔒 Secure payment</span>
+            <span>💳 Powered by Polar</span>
+          </div>
         </>
       )}
-      
-      <button
-        className="btn btn--ghost"
-        onClick={handleMaybeLater}
-      >
-        Maybe Later
-      </button>
-
-      {/* Trust indicators */}
-      <div className="text-center mt-6" style={{ 
-        fontSize: '0.75rem', 
-        color: 'var(--text-muted)',
-        display: 'flex',
-        justifyContent: 'center',
-        gap: '16px',
-        flexWrap: 'wrap',
-        marginTop: '16px'
-      }}>
-        <span>🔒 Secure payment</span>
-        <span>💳 Powered by Polar</span>
-      </div>
     </div>
   );
 }
