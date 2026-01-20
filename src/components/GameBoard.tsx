@@ -181,7 +181,9 @@ export function GameBoard({ round }: GameBoardProps) {
     if (round !== 2 || state.round1Cards.length === 0) return 0;
     
     const themeCards = state.round1Cards.filter(c => c.answer.theme === theme);
-    const mismatches = themeCards.filter(c => c.answer.matched === false).length;
+    // Only count cards that have been fully answered (matched !== null)
+    const answeredCards = themeCards.filter(c => c.answer.matched !== null);
+    const mismatches = answeredCards.filter(c => c.answer.matched === false).length;
     return mismatches;
   };
 

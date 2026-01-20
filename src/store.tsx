@@ -274,8 +274,10 @@ export function getThemeSummaries(cards: Card[]): ThemeSummary[] {
   
   return themes.map(theme => {
     const themeCards = cards.filter(c => c.answer.theme === theme);
-    const matches = themeCards.filter(c => c.answer.matched === true).length;
-    const total = themeCards.length;
+    // Only count cards that have been fully answered (matched !== null)
+    const answeredCards = themeCards.filter(c => c.answer.matched !== null);
+    const matches = answeredCards.filter(c => c.answer.matched === true).length;
+    const total = answeredCards.length; // Only count answered cards
     
     return {
       theme,
