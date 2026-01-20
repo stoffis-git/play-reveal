@@ -170,17 +170,10 @@ export function GameBoard({ round }: GameBoardProps) {
   // Calculate diff count
   const diffCount = revealedCount - matchCount;
 
-  // For Round 2, identify least matched themes from Round 1 and calculate mismatch counts
-  const leastMatchedThemes = useMemo(() => {
-    if (round !== 2 || state.round1Cards.length === 0) return new Set<Theme>();
-    
-    const themeSummaries = getThemeSummaries(state.round1Cards);
-    // Find themes with match percentage below 50% (most different)
-    const lowMatchThemes = themeSummaries
-      .filter(ts => ts.matchPercentage < 50)
-      .map(ts => ts.theme);
-    
-    return new Set(lowMatchThemes);
+  // For Round 2, get theme summaries to calculate mismatch counts and percentages
+  const themeSummaries = useMemo(() => {
+    if (round !== 2 || state.round1Cards.length === 0) return [];
+    return getThemeSummaries(state.round1Cards);
   }, [round, state.round1Cards]);
 
   // Calculate mismatch count per theme for Round 2
@@ -190,6 +183,11 @@ export function GameBoard({ round }: GameBoardProps) {
     const themeCards = state.round1Cards.filter(c => c.answer.theme === theme);
     const mismatches = themeCards.filter(c => c.answer.matched === false).length;
     return mismatches;
+  };
+
+  // Get theme summary for a specific theme (for consistency between bubble count and percentage)
+  const getThemeSummary = (theme: Theme) => {
+    return themeSummaries.find(ts => ts.theme === theme);
   };
 
   return (
@@ -286,8 +284,8 @@ export function GameBoard({ round }: GameBoardProps) {
       <div className="card-grid">
         {cards.map((card, index) => {
           const themeInfo = getCardThemeInfo(card);
-          const isLeastMatchedTheme = round === 2 && leastMatchedThemes.has(card.answer.theme);
-          const mismatchCount = isLeastMatchedTheme ? getThemeMismatchCount(card.answer.theme) : 0;
+          // For Round 2, calculate mismatch count for any theme with mismatches (not just <50%)
+          const mismatchCount = round === 2 ? getThemeMismatchCount(card.answer.theme) : 0;
           
           return (
             <div
@@ -303,8 +301,8 @@ export function GameBoard({ round }: GameBoardProps) {
                   <span className="game-card__theme" style={{ color: themeInfo.color }}>
                     {themeInfo.label}
                   </span>
-                  {/* Indicator for least matched themes in Round 2 - shows 1-3 bubbles based on mismatch count */}
-                  {isLeastMatchedTheme && mismatchCount > 0 && (
+                  {/* Indicator for Round 2 themes with mismatches - shows 1-3 bubbles based on mismatch count */}
+                  {round === 2 && mismatchCount > 0 && (
                     <div 
                       className="game-card__mismatch-indicator"
                       title={`This topic had ${mismatchCount} difference${mismatchCount > 1 ? 's' : ''} in Round 1`}
@@ -362,23 +360,28 @@ export function GameBoard({ round }: GameBoardProps) {
             {/* Round 2 intro explaining why this question */}
             {round === 2 && (
               <div className="question-modal__intro" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
-                {selectedCard && leastMatchedThemes.has(selectedCard.answer.theme) ? (() => {
-                  const themeSummaries = getThemeSummaries(state.round1Cards);
-                  const themeSummary = themeSummaries.find(ts => ts.theme === selectedCard.answer.theme);
-                  const matchPercentage = themeSummary?.matchPercentage || 0;
-                  const themeName = themeDisplayNames[selectedCard.answer.theme];
+                {selectedCard && (() => {
+                  const themeSummary = getThemeSummary(selectedCard.answer.theme);
+                  const mismatchCount = getThemeMismatchCount(selectedCard.answer.theme);
                   
-                  return (
-                    <>
-                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>💬</span>
-                      <span>
-                        In <strong>{themeName}</strong>, you had <strong style={{ color: 'var(--mismatch-amber)' }}>{matchPercentage}% alignment</strong> in Round 1. Let's explore this deeper...
-                      </span>
-                    </>
-                  );
-                })() : (
-                  getRound2Intro(selectedQuestion.id, selectedQuestion.theme, state.round1Cards)
-                )}
+                  // Show mismatch info if there are any mismatches (not just <50%)
+                  if (themeSummary && mismatchCount > 0) {
+                    const matchPercentage = themeSummary.matchPercentage;
+                    const themeName = themeDisplayNames[selectedCard.answer.theme];
+                    
+                    return (
+                      <>
+                        <span style={{ fontSize: '1rem', flexShrink: 0 }}>💬</span>
+                        <span>
+                          In <strong>{themeName}</strong>, you had <strong style={{ color: 'var(--mismatch-amber)' }}>{matchPercentage}% alignment</strong> in Round 1. Let's explore this deeper...
+                        </span>
+                      </>
+                    );
+                  }
+                  
+                  // Fallback to standard intro for themes with no mismatches
+                  return getRound2Intro(selectedQuestion.id, selectedQuestion.theme, state.round1Cards);
+                })()}
               </div>
             )}
             
