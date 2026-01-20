@@ -26,16 +26,16 @@ export function PaymentSuccess() {
     // If payment already marked as complete (from App.tsx auto-detection), skip processing
     if (state.hasPaid) {
       setIsProcessing(false);
-      // Auto-start Round 2 immediately if cards aren't initialized
+      // Show success screen for longer (5 seconds) before auto-starting Round 2
       if (state.round2Cards.length === 0) {
         startRound2Timer = setTimeout(() => {
           dispatch({ type: 'START_ROUND_2' });
-        }, 1000);
+        }, 5000);
       } else {
-        // Round 2 already initialized, just navigate
+        // Round 2 already initialized, just navigate after showing success
         startRound2Timer = setTimeout(() => {
           dispatch({ type: 'NAVIGATE_TO', screen: 'round2' });
-        }, 1000);
+        }, 5000);
       }
     } else {
       // Complete the payment after a brief moment
@@ -43,10 +43,10 @@ export function PaymentSuccess() {
         dispatch({ type: 'COMPLETE_PAYMENT' });
         setIsProcessing(false);
         
-        // Automatically start Round 2 after showing success briefly (2 seconds total)
+        // Show success screen for longer (5 seconds) before auto-starting Round 2
         startRound2Timer = setTimeout(() => {
           dispatch({ type: 'START_ROUND_2' });
-        }, 2000);
+        }, 5000);
       }, 1500);
     }
 

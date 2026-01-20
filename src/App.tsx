@@ -39,17 +39,9 @@ function GameRouter() {
       // Clean up URL immediately to prevent ERR_NAME_NOT_RESOLVED and re-triggering
       window.history.replaceState({}, '', window.location.pathname);
       
-      // If Round 1 is complete, start Round 2 directly (skip PaymentSuccess screen)
-      // Payment status is already saved by COMPLETE_PAYMENT action
-      if (state.round1Complete) {
-        // Small delay to ensure payment status is saved before starting Round 2
-        setTimeout(() => {
-          dispatch({ type: 'START_ROUND_2' });
-        }, 100);
-      } else {
-        // Round 1 not complete yet, show PaymentSuccess screen
-        dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
-      }
+      // Always show PaymentSuccess screen so users can see the confirmation
+      // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
+      dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
     }
   }, [dispatch, state.round1Complete]);
 
