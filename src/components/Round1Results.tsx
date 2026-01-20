@@ -282,7 +282,7 @@ export function Round1Results() {
                       fontWeight: '600',
                       color: 'var(--partner1)'
                     }}>
-                      🔒 Unlock below
+                      {state.hasPaid ? '🔒 Unlock after Round 2' : '🔒 Unlock below'}
                     </span>
                   </div>
                 </div>
