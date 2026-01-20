@@ -224,6 +224,9 @@ export function GameBoard({ round }: GameBoardProps) {
             {currentPlayerName.toUpperCase()}'S TURN
           </div>
         </div>
+        <div className="progress-counter-header">
+          {revealedCount}/15
+        </div>
         {round === 2 && (
           <span style={{
             background: 'linear-gradient(135deg, var(--partner2) 0%, #FF7A8F 100%)',
@@ -232,15 +235,11 @@ export function GameBoard({ round }: GameBoardProps) {
             borderRadius: '100px',
             fontSize: '0.625rem',
             fontWeight: '700',
-            letterSpacing: '1px',
-            marginRight: '8px'
+            letterSpacing: '1px'
           }}>
             ⭐ ROUND 2
           </span>
         )}
-        <div className="progress-counter-header">
-          {revealedCount}/15
-        </div>
       </div>
 
       {/* Dynamic Progress Lever Bar */}
