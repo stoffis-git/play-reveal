@@ -4,7 +4,7 @@ import { getQuestionWithExample, getRound2Intro } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
 import type { Card, Theme } from '../types';
-import { themeTinyLabels, themeColors } from '../types';
+import { themeTinyLabels, themeColors, themeDisplayNames } from '../types';
 
 interface GameBoardProps {
   round: 1 | 2;
@@ -333,36 +333,26 @@ export function GameBoard({ round }: GameBoardProps) {
           <div className={`question-modal question-modal--player${state.currentPlayer} animate-modal-in`}>
             {/* Round 2 intro explaining why this question */}
             {round === 2 && (
-              <div className="question-modal__intro">
-                {getRound2Intro(selectedQuestion.id, selectedQuestion.theme, state.round1Cards)}
+              <div className="question-modal__intro" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                {selectedCard && leastMatchedThemes.has(selectedCard.answer.theme) ? (() => {
+                  const themeSummaries = getThemeSummaries(state.round1Cards);
+                  const themeSummary = themeSummaries.find(ts => ts.theme === selectedCard.answer.theme);
+                  const matchPercentage = themeSummary?.matchPercentage || 0;
+                  const themeName = themeDisplayNames[selectedCard.answer.theme];
+                  
+                  return (
+                    <>
+                      <span style={{ fontSize: '1rem', flexShrink: 0 }}>💬</span>
+                      <span>
+                        In <strong>{themeName}</strong>, you had <strong style={{ color: 'var(--mismatch-amber)' }}>{matchPercentage}% alignment</strong> in Round 1. Let's explore this deeper...
+                      </span>
+                    </>
+                  );
+                })() : (
+                  getRound2Intro(selectedQuestion.id, selectedQuestion.theme, state.round1Cards)
+                )}
               </div>
             )}
-            
-            {/* Mismatch indicator info for Round 2 tiles with differences from Round 1 */}
-            {round === 2 && selectedCard && leastMatchedThemes.has(selectedCard.answer.theme) && (() => {
-              const themeSummaries = getThemeSummaries(state.round1Cards);
-              const themeSummary = themeSummaries.find(ts => ts.theme === selectedCard.answer.theme);
-              const matchPercentage = themeSummary?.matchPercentage || 0;
-              
-              return (
-                <div style={{
-                  background: 'rgba(255, 179, 71, 0.1)',
-                  border: '1px solid rgba(255, 179, 71, 0.3)',
-                  borderRadius: '8px',
-                  padding: '10px 12px',
-                  marginBottom: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  fontSize: '0.85rem'
-                }}>
-                  <span style={{ fontSize: '1rem' }}>💬</span>
-                  <span style={{ color: 'var(--text-secondary)' }}>
-                    This topic had <strong style={{ color: 'var(--mismatch-amber)' }}>{matchPercentage}% alignment</strong> in Round 1—let's explore it deeper.
-                  </span>
-                </div>
-              );
-            })()}
             
             <p className="question-modal__text">
               {selectedQuestion.text}
