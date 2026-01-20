@@ -337,8 +337,8 @@ h3 {
 /* Mismatch indicator for Round 2 tiles (least matched themes from Round 1) */
 .game-card__mismatch-indicator {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 6px;
+  left: 6px;
   align-items: center;
   justify-content: flex-start;
   z-index: 10;
