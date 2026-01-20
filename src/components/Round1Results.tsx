@@ -372,23 +372,13 @@ export function Round1Results() {
         <>
           {hasPaymentInitiated ? (
             // User returned after payment - show manual unlock button
-            <div style={{ marginBottom: '12px' }}>
-              <button
-                className="btn btn--accent btn--full"
-                onClick={handleManualUnlock}
-                style={{ marginBottom: '8px' }}
-              >
-                ✅ I've completed payment - Unlock Round 2
-              </button>
-              <p style={{ 
-                fontSize: '0.7rem', 
-                color: 'var(--text-muted)', 
-                textAlign: 'center',
-                fontStyle: 'italic'
-              }}>
-                Returned from payment? Click above to unlock Round 2
-              </p>
-            </div>
+            <button
+              className="btn btn--accent btn--full"
+              onClick={handleManualUnlock}
+              style={{ marginBottom: '12px' }}
+            >
+              ✨ Unlock Round 2
+            </button>
           ) : (
             // Normal unlock button
             <>
