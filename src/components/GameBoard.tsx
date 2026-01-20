@@ -170,7 +170,7 @@ export function GameBoard({ round }: GameBoardProps) {
   // Calculate diff count
   const diffCount = revealedCount - matchCount;
 
-  // For Round 2, identify least matched themes from Round 1
+  // For Round 2, identify least matched themes from Round 1 and calculate mismatch counts
   const leastMatchedThemes = useMemo(() => {
     if (round !== 2 || state.round1Cards.length === 0) return new Set<Theme>();
     
@@ -182,6 +182,15 @@ export function GameBoard({ round }: GameBoardProps) {
     
     return new Set(lowMatchThemes);
   }, [round, state.round1Cards]);
+
+  // Calculate mismatch count per theme for Round 2
+  const getThemeMismatchCount = (theme: Theme): number => {
+    if (round !== 2 || state.round1Cards.length === 0) return 0;
+    
+    const themeCards = state.round1Cards.filter(c => c.answer.theme === theme);
+    const mismatches = themeCards.filter(c => c.answer.matched === false).length;
+    return mismatches;
+  };
 
   return (
     <div className="game-container">
@@ -278,6 +287,7 @@ export function GameBoard({ round }: GameBoardProps) {
         {cards.map((card, index) => {
           const themeInfo = getCardThemeInfo(card);
           const isLeastMatchedTheme = round === 2 && leastMatchedThemes.has(card.answer.theme);
+          const mismatchCount = isLeastMatchedTheme ? getThemeMismatchCount(card.answer.theme) : 0;
           
           return (
             <div
@@ -293,14 +303,32 @@ export function GameBoard({ round }: GameBoardProps) {
                   <span className="game-card__theme" style={{ color: themeInfo.color }}>
                     {themeInfo.label}
                   </span>
-                  {/* Indicator for least matched themes in Round 2 */}
-                  {isLeastMatchedTheme && (
-                    <span 
+                  {/* Indicator for least matched themes in Round 2 - shows 1-3 bubbles based on mismatch count */}
+                  {isLeastMatchedTheme && mismatchCount > 0 && (
+                    <div 
                       className="game-card__mismatch-indicator"
-                      title="This topic had the most differences in Round 1"
+                      title={`This topic had ${mismatchCount} difference${mismatchCount > 1 ? 's' : ''} in Round 1`}
+                      style={{
+                        display: 'flex',
+                        position: 'relative',
+                        width: mismatchCount === 1 ? '20px' : mismatchCount === 2 ? '26px' : '32px',
+                        height: '20px'
+                      }}
                     >
-                      💬
-                    </span>
+                      {Array.from({ length: mismatchCount }).map((_, i) => (
+                        <span
+                          key={i}
+                          style={{
+                            position: 'absolute',
+                            left: `${i * 6}px`,
+                            fontSize: '0.75rem',
+                            zIndex: mismatchCount - i
+                          }}
+                        >
+                          💬
+                        </span>
+                      ))}
+                    </div>
                   )}
                 </>
               )}
