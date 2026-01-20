@@ -334,6 +334,24 @@ h3 {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
+/* Mismatch indicator for Round 2 tiles (least matched themes from Round 1) */
+.game-card__mismatch-indicator {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-size: 0.75rem;
+  background: rgba(255, 179, 71, 0.9);
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  z-index: 10;
+  pointer-events: none;
+}
+
 
 .game-card--partner1-answered {
   background: linear-gradient(145deg, var(--card-unplayed) 0%, var(--card-unplayed-hover) 100%);

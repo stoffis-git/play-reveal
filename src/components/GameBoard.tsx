@@ -1,9 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { useGame, getMatchCount } from '../store';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import { useGame, getMatchCount, getThemeSummaries } from '../store';
 import { getQuestionWithExample, getRound2Intro } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
-import type { Card } from '../types';
+import type { Card, Theme } from '../types';
 import { themeTinyLabels, themeColors } from '../types';
 
 interface GameBoardProps {
@@ -170,6 +170,19 @@ export function GameBoard({ round }: GameBoardProps) {
   // Calculate diff count
   const diffCount = revealedCount - matchCount;
 
+  // For Round 2, identify least matched themes from Round 1
+  const leastMatchedThemes = useMemo(() => {
+    if (round !== 2 || state.round1Cards.length === 0) return new Set<Theme>();
+    
+    const themeSummaries = getThemeSummaries(state.round1Cards);
+    // Find themes with match percentage below 50% (most different)
+    const lowMatchThemes = themeSummaries
+      .filter(ts => ts.matchPercentage < 50)
+      .map(ts => ts.theme);
+    
+    return new Set(lowMatchThemes);
+  }, [round, state.round1Cards]);
+
   return (
     <div className="game-container">
       {/* Intro screen - whose turn is it */}
@@ -202,24 +215,7 @@ export function GameBoard({ round }: GameBoardProps) {
         </div>
       )}
 
-      {/* Round indicator for Round 2 */}
-      {round === 2 && (
-        <div className="text-center" style={{ marginBottom: '4px' }}>
-          <span style={{
-            background: 'linear-gradient(135deg, var(--partner2) 0%, #FF7A8F 100%)',
-            color: 'white',
-            padding: '4px 12px',
-            borderRadius: '100px',
-            fontSize: '0.625rem',
-            fontWeight: '700',
-            letterSpacing: '1px'
-          }}>
-            ✨ ROUND 2: DEEP DIVE
-          </span>
-        </div>
-      )}
-
-      {/* Header with menu, turn indicator, and progress counter */}
+      {/* Header with menu, turn indicator, progress counter, and Round 2 pill */}
       <div className="game-header">
         <Menu buttonPosition="inline" />
         <div className="turn-indicator-wrapper">
@@ -228,6 +224,20 @@ export function GameBoard({ round }: GameBoardProps) {
             {currentPlayerName.toUpperCase()}'S TURN
           </div>
         </div>
+        {round === 2 && (
+          <span style={{
+            background: 'linear-gradient(135deg, var(--partner2) 0%, #FF7A8F 100%)',
+            color: 'white',
+            padding: '4px 10px',
+            borderRadius: '100px',
+            fontSize: '0.625rem',
+            fontWeight: '700',
+            letterSpacing: '1px',
+            marginRight: '8px'
+          }}>
+            ⭐ ROUND 2
+          </span>
+        )}
         <div className="progress-counter-header">
           {revealedCount}/15
         </div>
@@ -268,6 +278,7 @@ export function GameBoard({ round }: GameBoardProps) {
       <div className="card-grid">
         {cards.map((card, index) => {
           const themeInfo = getCardThemeInfo(card);
+          const isLeastMatchedTheme = round === 2 && leastMatchedThemes.has(card.answer.theme);
           
           return (
             <div
@@ -279,9 +290,20 @@ export function GameBoard({ round }: GameBoardProps) {
             >
               {/* Theme label for face-down cards */}
               {(card.state === 'faceDown' || card.state === 'partner1Only' || card.state === 'partner2Only') && (
-                <span className="game-card__theme" style={{ color: themeInfo.color }}>
-                  {themeInfo.label}
-                </span>
+                <>
+                  <span className="game-card__theme" style={{ color: themeInfo.color }}>
+                    {themeInfo.label}
+                  </span>
+                  {/* Indicator for least matched themes in Round 2 */}
+                  {isLeastMatchedTheme && (
+                    <span 
+                      className="game-card__mismatch-indicator"
+                      title="This topic had the most differences in Round 1"
+                    >
+                      💬
+                    </span>
+                  )}
+                </>
               )}
             </div>
           );
