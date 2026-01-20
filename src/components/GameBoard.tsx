@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useGame, getMatchCount, getThemeSummaries } from '../store';
-import { getQuestionWithExample, getRound2Intro } from '../questions';
+import { getQuestionWithExample, getRound2Intro, round1Questions } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
 import type { Card, Theme } from '../types';
@@ -176,6 +176,11 @@ export function GameBoard({ round }: GameBoardProps) {
     return getThemeSummaries(state.round1Cards);
   }, [round, state.round1Cards]);
 
+  // Get total card count for a theme in Round 1
+  const getThemeCardCount = (theme: Theme): number => {
+    return round1Questions.filter(q => q.theme === theme).length;
+  };
+
   // Calculate mismatch count per theme for Round 2
   const getThemeMismatchCount = (theme: Theme): number => {
     if (round !== 2 || state.round1Cards.length === 0) return 0;
@@ -185,12 +190,25 @@ export function GameBoard({ round }: GameBoardProps) {
     const answeredCards = themeCards.filter(c => c.answer.matched !== null);
     const mismatches = answeredCards.filter(c => c.answer.matched === false).length;
     
-    // Debug: Log if we find inconsistencies (can be removed later)
-    if (answeredCards.length > 0 && answeredCards.length < 3) {
-      console.log(`[Round 2 Debug] Theme ${theme}: ${answeredCards.length} answered cards, ${mismatches} mismatches`);
+    return mismatches;
+  };
+
+  // Calculate bubble count for Round 2 mismatch indicators
+  // Logic: If all cards in theme mismatch → show 3 bubbles (max visual indicator)
+  // Otherwise → show actual mismatch count (1 or 2 bubbles)
+  const getBubbleCount = (theme: Theme): number => {
+    if (round !== 2) return 0;
+    
+    const totalCardCount = getThemeCardCount(theme);
+    const mismatchCount = getThemeMismatchCount(theme);
+    
+    // If all cards in theme mismatch, show 3 bubbles (maximum visual indicator)
+    if (mismatchCount > 0 && mismatchCount === totalCardCount) {
+      return 3;
     }
     
-    return mismatches;
+    // Otherwise, show actual mismatch count
+    return mismatchCount;
   };
 
   // Get theme summary for a specific theme (for consistency between bubble count and percentage)
@@ -292,7 +310,9 @@ export function GameBoard({ round }: GameBoardProps) {
       <div className="card-grid">
         {cards.map((card, index) => {
           const themeInfo = getCardThemeInfo(card);
-          // For Round 2, calculate mismatch count for any theme with mismatches (not just <50%)
+          // For Round 2, calculate bubble count for themes with mismatches
+          // Logic: If all cards mismatch → 3 bubbles, otherwise → actual mismatch count
+          const bubbleCount = round === 2 ? getBubbleCount(card.answer.theme) : 0;
           const mismatchCount = round === 2 ? getThemeMismatchCount(card.answer.theme) : 0;
           
           return (
@@ -309,27 +329,28 @@ export function GameBoard({ round }: GameBoardProps) {
                   <span className="game-card__theme" style={{ color: themeInfo.color }}>
                     {themeInfo.label}
                   </span>
-                  {/* Indicator for Round 2 themes with mismatches - shows 1-3 bubbles based on mismatch count */}
-                  {round === 2 && mismatchCount > 0 && (
+                  {/* Indicator for Round 2 themes with mismatches
+                      Shows 1-3 bubbles: complete mismatch (all cards) = 3 bubbles, partial mismatch = actual count */}
+                  {round === 2 && bubbleCount > 0 && (
                     <div 
                       className="game-card__mismatch-indicator"
                       title={`This topic had ${mismatchCount} difference${mismatchCount > 1 ? 's' : ''} in Round 1`}
                       style={{
                         display: 'flex',
                         position: 'relative',
-                        width: mismatchCount === 1 ? '20px' : mismatchCount === 2 ? '26px' : '38px',
+                        width: bubbleCount === 1 ? '20px' : bubbleCount === 2 ? '26px' : '38px',
                         height: '20px',
                         overflow: 'visible'
                       }}
                     >
-                      {Array.from({ length: mismatchCount }).map((_, i) => (
+                      {Array.from({ length: bubbleCount }).map((_, i) => (
                         <span
                           key={i}
                           style={{
                             position: 'absolute',
                             left: `${i * 6}px`,
                             fontSize: '0.75rem',
-                            zIndex: mismatchCount - i
+                            zIndex: bubbleCount - i
                           }}
                         >
                           💬
