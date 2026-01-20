@@ -10,11 +10,12 @@ function GameRouter() {
     const urlParams = new URLSearchParams(window.location.search);
     const screen = urlParams.get('screen')?.trim();
     
-    // Polar redirects to: https://playreveal.com?screen=paymentSuccess
-    // Optional: &checkout_id={CHECKOUT_ID} if you include {CHECKOUT_ID} in success_url
+    // Polar redirects to: https://playreveal.com?screen=paymentSuccess&checkout_id=...&customer_session_token=...
     if (screen === 'paymentSuccess') {
-      // Store checkout_id if provided by Polar
+      // Store checkout_id and customer_session_token if provided by Polar
       const checkoutId = urlParams.get('checkout_id');
+      const customerSessionToken = urlParams.get('customer_session_token');
+      
       if (checkoutId) {
         try {
           localStorage.setItem('reveal-checkout-id', checkoutId);
@@ -23,13 +24,33 @@ function GameRouter() {
         }
       }
       
-      // Navigate to payment success screen
-      dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      if (customerSessionToken) {
+        try {
+          localStorage.setItem('reveal-customer-session-token', customerSessionToken);
+        } catch {
+          // Ignore storage errors
+        }
+      }
       
-      // Clean up URL to remove query params (prevents re-triggering on refresh)
+      // Mark payment as complete (saves payment status to localStorage)
+      dispatch({ type: 'COMPLETE_PAYMENT' });
+      
+      // Clean up URL immediately to prevent ERR_NAME_NOT_RESOLVED and re-triggering
       window.history.replaceState({}, '', window.location.pathname);
+      
+      // If Round 1 is complete, start Round 2 directly (skip PaymentSuccess screen)
+      // Payment status is already saved by COMPLETE_PAYMENT action
+      if (state.round1Complete) {
+        // Small delay to ensure payment status is saved before starting Round 2
+        setTimeout(() => {
+          dispatch({ type: 'START_ROUND_2' });
+        }, 100);
+      } else {
+        // Round 1 not complete yet, show PaymentSuccess screen
+        dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      }
     }
-  }, [dispatch]);
+  }, [dispatch, state.round1Complete]);
 
   switch (state.currentScreen) {
     case 'landing':

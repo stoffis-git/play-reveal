@@ -81,7 +81,7 @@ export function LandingPage() {
 
   const handleSendReminder = async () => {
     const url = window.location.origin;
-    const text = `Let\u2019s play this together later: Reveal \u2013 the game for couples.\n\nWhen we\u2019re both free, open this on one phone and we\u2019ll play together: ${url}`;
+    const text = `Let\u2019s play this together later: Reveal \u2013 the game for couples.\n\nWhen we\u2019re both free, open this on one phone and we\u2019ll play together.`;
 
     try {
       if (navigator.share) {
