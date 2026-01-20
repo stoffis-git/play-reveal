@@ -323,6 +323,25 @@ export function Round1Results() {
             padding: '16px',
             marginBottom: '16px'
           }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+              {[
+                { icon: '🎴', text: '+ 15 questions based on your round 1.' },
+                { icon: '📊', text: 'Complete relationship insights.' }, 
+                { icon: '💬', text: 'Full conversation starters with deep dives.' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span>{item.icon}</span>
+                  <span>{item.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div style={{ 
+            background: 'white',
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
             <div style={{ 
               fontSize: '0.75rem',
               fontWeight: '700',
@@ -350,25 +369,6 @@ export function Round1Results() {
               textAlign: 'center'
             }}>
               One-time payment • No subscription
-            </div>
-          </div>
-
-          <div style={{ 
-            background: 'white',
-            borderRadius: '12px',
-            padding: '16px'
-          }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
-              {[
-                { icon: '🎴', text: '+ 15 questions based on your round 1.' },
-                { icon: '📊', text: 'Complete relationship insights.' }, 
-                { icon: '💬', text: 'Full conversation starters with deep dives.' },
-              ].map((item, i) => (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span>{item.icon}</span>
-                  <span>{item.text}</span>
-                </div>
-              ))}
             </div>
           </div>
         </div>
