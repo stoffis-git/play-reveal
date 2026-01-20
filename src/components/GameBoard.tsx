@@ -338,6 +338,32 @@ export function GameBoard({ round }: GameBoardProps) {
               </div>
             )}
             
+            {/* Mismatch indicator info for Round 2 tiles with differences from Round 1 */}
+            {round === 2 && selectedCard && leastMatchedThemes.has(selectedCard.answer.theme) && (() => {
+              const themeSummaries = getThemeSummaries(state.round1Cards);
+              const themeSummary = themeSummaries.find(ts => ts.theme === selectedCard.answer.theme);
+              const matchPercentage = themeSummary?.matchPercentage || 0;
+              
+              return (
+                <div style={{
+                  background: 'rgba(255, 179, 71, 0.1)',
+                  border: '1px solid rgba(255, 179, 71, 0.3)',
+                  borderRadius: '8px',
+                  padding: '10px 12px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '0.85rem'
+                }}>
+                  <span style={{ fontSize: '1rem' }}>💬</span>
+                  <span style={{ color: 'var(--text-secondary)' }}>
+                    This topic had <strong style={{ color: 'var(--mismatch-amber)' }}>{matchPercentage}% alignment</strong> in Round 1—let's explore it deeper.
+                  </span>
+                </div>
+              );
+            })()}
+            
             <p className="question-modal__text">
               {selectedQuestion.text}
             </p>
