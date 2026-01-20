@@ -399,23 +399,6 @@ export function Round1Results() {
               >
                 ✨ Unlock Round 2 — $4.99
               </button>
-              <div style={{
-                background: 'rgba(224, 29, 148, 0.1)',
-                borderRadius: '12px',
-                padding: '12px',
-                marginTop: '8px',
-                border: '1px solid rgba(224, 29, 148, 0.2)'
-              }}>
-                <p style={{ 
-                  fontSize: '0.7rem', 
-                  color: 'var(--text-secondary)', 
-                  textAlign: 'center',
-                  margin: 0,
-                  fontWeight: '500'
-                }}>
-                  ⚠️ After payment, return here and click "I've completed payment"
-                </p>
-              </div>
             </>
           )}
         </>
