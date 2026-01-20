@@ -184,6 +184,12 @@ export function GameBoard({ round }: GameBoardProps) {
     // Only count cards that have been fully answered (matched !== null)
     const answeredCards = themeCards.filter(c => c.answer.matched !== null);
     const mismatches = answeredCards.filter(c => c.answer.matched === false).length;
+    
+    // Debug: Log if we find inconsistencies (can be removed later)
+    if (answeredCards.length > 0 && answeredCards.length < 3) {
+      console.log(`[Round 2 Debug] Theme ${theme}: ${answeredCards.length} answered cards, ${mismatches} mismatches`);
+    }
+    
     return mismatches;
   };
 
@@ -311,8 +317,9 @@ export function GameBoard({ round }: GameBoardProps) {
                       style={{
                         display: 'flex',
                         position: 'relative',
-                        width: mismatchCount === 1 ? '20px' : mismatchCount === 2 ? '26px' : '32px',
-                        height: '20px'
+                        width: mismatchCount === 1 ? '20px' : mismatchCount === 2 ? '26px' : '38px',
+                        height: '20px',
+                        overflow: 'visible'
                       }}
                     >
                       {Array.from({ length: mismatchCount }).map((_, i) => (
