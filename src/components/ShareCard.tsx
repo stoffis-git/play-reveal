@@ -56,7 +56,7 @@ export function ShareCard({ onClose }: { onClose?: () => void }) {
               objectFit: 'contain'
             }}
           />
-          <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '6px', textAlign: 'left' }}>Total match</div>
+          <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '6px', textAlign: 'center' }}>Total match</div>
           <div className="share-preview__score" style={{ fontSize: '3.5rem', lineHeight: 1, textAlign: 'center' }}>
             {displayPercentage}%
           </div>

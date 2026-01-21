@@ -243,6 +243,31 @@ export function FinalResults() {
   const { state, dispatch } = useGame();
   const [showShareOverlay, setShowShareOverlay] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const handleShareWithFriends = async () => {
+    const url = window.location.origin;
+    const text = `Let’s play this together: Reveal – the game for couples.\n\nOpen this on one phone when you’re together.`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Reveal – Game for Couples',
+          text,
+          url
+        });
+        return;
+      }
+    } catch {
+      // Ignore share errors and fall through to clipboard fallback
+    }
+
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Copied. Paste it into your favorite chat.');
+    } catch {
+      alert('Could not copy. Please copy this link manually: ' + url);
+    }
+  };
   
   const round1Matches = getMatchCount(state.round1Cards);
   const round2Matches = getMatchCount(state.round2Cards);
@@ -260,7 +285,7 @@ export function FinalResults() {
     .slice(0, 5);
 
   return (
-    <div className="container animate-slide-up" style={{ paddingBottom: '40px' }}>
+    <div className="container animate-slide-up" style={{ paddingTop: '12px', paddingBottom: '40px' }}>
       {/* Header with menu */}
       <div className="game-header" style={{ marginBottom: '24px' }}>
         <Menu buttonPosition="inline" />
@@ -437,11 +462,19 @@ export function FinalResults() {
           </button>
           <button
             className="btn btn--secondary btn--full"
-            onClick={() => dispatch({ type: 'RESET_GAME' })}
+            onClick={handleShareWithFriends}
           >
-            Start Over
+            Share game with friends
           </button>
         </div>
+      </div>
+      <div style={{ marginTop: '14px' }}>
+        <button
+          className="btn btn--ghost btn--full"
+          onClick={() => dispatch({ type: 'RESET_GAME' })}
+        >
+          Start Over
+        </button>
       </div>
       {showShareOverlay && (
         <ShareCard onClose={() => setShowShareOverlay(false)} />
