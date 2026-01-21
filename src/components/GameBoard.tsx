@@ -196,8 +196,12 @@ export function GameBoard({ round }: GameBoardProps) {
         });
         return;
       }
-    } catch {
-      // Ignore share errors and fall through to clipboard fallback
+    } catch (err) {
+      // User cancelled share — don't show clipboard fallback error UI.
+      if (err && typeof err === 'object' && 'name' in err && (err as { name?: string }).name === 'AbortError') {
+        return;
+      }
+      // Otherwise fall through to clipboard fallback
     }
 
     try {
