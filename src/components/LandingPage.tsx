@@ -152,7 +152,7 @@ export function LandingPage() {
             Discover how in-sync you really are
           </p>
           <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '8px auto 0' }}>
-            The game for couples & relationships
+            A fun and insightful memory card-style game for couples & relationships
           </p>
         </div>
 
@@ -234,7 +234,7 @@ export function LandingPage() {
         <button
           className="btn btn--secondary btn--full"
           onClick={handleSendReminder}
-          style={{ maxWidth: '250px', margin: '0 auto 24px' }}
+          style={{ maxWidth: '300px', margin: '0 auto 24px' }}
         >
           Send to partner to play later
         </button>
