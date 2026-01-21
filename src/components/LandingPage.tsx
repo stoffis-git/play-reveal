@@ -234,7 +234,7 @@ export function LandingPage() {
         <button
           className="btn btn--secondary btn--full"
           onClick={handleSendReminder}
-          style={{ maxWidth: '300px', margin: '0 auto 24px' }}
+          style={{ maxWidth: '300px', margin: '0 auto 24px', display: 'block' }}
         >
           Send to partner to play later
         </button>
@@ -296,6 +296,16 @@ export function LandingPage() {
               </div>
             ))}
           </div>
+          <p
+            style={{
+              marginTop: '12px',
+              fontSize: '0.85rem',
+              color: 'var(--text-muted)',
+              textAlign: 'center'
+            }}
+          >
+            Note: Both players need to be present.
+          </p>
         </div>
 
         {/* Trust indicators */}
