@@ -471,7 +471,11 @@ export function FinalResults() {
       <div style={{ marginTop: '14px' }}>
         <button
           className="btn btn--ghost btn--full"
-          onClick={() => dispatch({ type: 'RESET_GAME' })}
+          onClick={() => {
+            if (confirm('Start over? Your progress will be lost.')) {
+              dispatch({ type: 'RESET_GAME' });
+            }
+          }}
         >
           Start Over
         </button>

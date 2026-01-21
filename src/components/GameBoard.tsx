@@ -22,11 +22,13 @@ export function GameBoard({ round }: GameBoardProps) {
   const [showIntro, setShowIntro] = useState(true); // Show "whose turn" intro
   const [showPassDevice, setShowPassDevice] = useState(false);
   const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
   const [showQuestion, setShowQuestion] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
   const [revealedCard, setRevealedCard] = useState<Card | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const toastTimerRef = useRef<number | null>(null);
 
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
@@ -214,7 +216,9 @@ export function GameBoard({ round }: GameBoardProps) {
       url;
     try {
       await navigator.clipboard.writeText(text);
-      alert('Copied. Paste it into your favorite chat.');
+      setCopyToast('Copied to clipboard');
+      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = window.setTimeout(() => setCopyToast(null), 1500);
     } catch {
       alert('Could not copy. Please copy this link manually: ' + url);
     }
@@ -516,8 +520,8 @@ export function GameBoard({ round }: GameBoardProps) {
             I'm {state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
           </button>
           {isFirstPartner2Handoff && (
-            <div style={{ marginTop: '14px', width: '100%', maxWidth: '420px' }}>
-              <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+            <div style={{ marginTop: '32px', width: '100%', maxWidth: '420px' }}>
+              <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'white', textAlign: 'center' }}>
                 Not together right now? Send this to your partner to play later.
               </p>
               <button
@@ -528,17 +532,27 @@ export function GameBoard({ round }: GameBoardProps) {
                 Send to partner to play later
               </button>
               <button
-                className="btn btn--ghost"
+                type="button"
                 onClick={handleCopyPartnerReminder}
                 style={{
                   marginTop: '8px',
                   width: '100%',
+                  padding: 0,
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'white',
                   fontSize: '0.85rem',
-                  opacity: 0.9
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
                 }}
               >
                 Copy link
               </button>
+              {copyToast && (
+                <div style={{ marginTop: '6px', textAlign: 'center', fontSize: '0.8rem', color: 'white', opacity: 0.9 }}>
+                  {copyToast}
+                </div>
+              )}
             </div>
           )}
         </div>
