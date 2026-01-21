@@ -84,10 +84,11 @@ interface ExpandableThemeProps {
   cards: Card[];
   partner1Name: string;
   partner2Name: string;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: ExpandableThemeProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function ExpandableTheme({ summary, cards, partner1Name, partner2Name, isExpanded, onToggle }: ExpandableThemeProps) {
   const themeCards = cards.filter(c => c.answer.theme === summary.theme);
   const mismatches = themeCards.filter(c => c.answer.matched === false);
   const themeColor = themeColors[summary.theme];
@@ -114,7 +115,7 @@ function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: Expanda
     <div className="expandable-theme">
       <button 
         className="expandable-theme__header"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={onToggle}
       >
         <div className="expandable-theme__info">
           <span 
@@ -134,8 +135,17 @@ function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: Expanda
         </div>
       </button>
       
-      {isExpanded && (
-        <div className="expandable-theme__content">
+      <div
+        className="expandable-theme__content"
+        style={{
+          maxHeight: isExpanded ? '1000px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+          overflow: 'hidden',
+          transition: 'max-height 240ms ease, opacity 180ms ease',
+          pointerEvents: isExpanded ? 'auto' : 'none'
+        }}
+      >
+        <div style={{ paddingTop: isExpanded ? '12px' : '0px', transition: 'padding-top 240ms ease' }}>
           {/* Why It Matters */}
           <div className="expandable-theme__section">
             <div className="expandable-theme__section-title">💡 Why This Matters</div>
@@ -172,17 +182,18 @@ function ExpandableTheme({ summary, cards, partner1Name, partner2Name }: Expanda
             <p className="expandable-theme__conversation">"{conversationStarter}"</p>
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 }
 
 interface GrowthStepProps {
   theme: ThemeSummary;
+  isExpanded: boolean;
+  onToggle: () => void;
 }
 
-function GrowthStep({ theme }: GrowthStepProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+function GrowthStep({ theme, isExpanded, onToggle }: GrowthStepProps) {
   // For growth steps, use a generic theme insight since we don't have a specific card
   const insight = getInsightForQuestion('', theme.theme);
   const themeColor = themeColors[theme.theme];
@@ -197,7 +208,7 @@ function GrowthStep({ theme }: GrowthStepProps) {
     <div className="growth-step">
       <button 
         className="growth-step__header"
-        onClick={() => setIsExpanded(!isExpanded)}
+        onClick={onToggle}
       >
         <span className="growth-step__name" style={{ color: themeColor }}>
           {theme.displayName}
@@ -205,9 +216,17 @@ function GrowthStep({ theme }: GrowthStepProps) {
         <span className={`growth-step__arrow ${isExpanded ? 'open' : ''}`}>▼</span>
       </button>
       
-      {isExpanded && (
-        <div className="growth-step__content">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+      <div
+        className="growth-step__content"
+        style={{
+          maxHeight: isExpanded ? '600px' : '0px',
+          opacity: isExpanded ? 1 : 0,
+          overflow: 'hidden',
+          transition: 'max-height 240ms ease, opacity 180ms ease',
+          pointerEvents: isExpanded ? 'auto' : 'none'
+        }}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: isExpanded ? '10px' : '0px', transition: 'margin-top 240ms ease' }}>
             {displaySteps.map((step, i) => (
               <div key={i} className="growth-step__action">
                 <span className="growth-step__emoji">🎯</span>
@@ -215,8 +234,7 @@ function GrowthStep({ theme }: GrowthStepProps) {
               </div>
             ))}
           </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
@@ -224,6 +242,7 @@ function GrowthStep({ theme }: GrowthStepProps) {
 export function FinalResults() {
   const { state, dispatch } = useGame();
   const [showShareOverlay, setShowShareOverlay] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
   
   const round1Matches = getMatchCount(state.round1Cards);
   const round2Matches = getMatchCount(state.round2Cards);
@@ -346,6 +365,10 @@ export function FinalResults() {
               cards={allCards}
               partner1Name={state.partner1Name}
               partner2Name={state.partner2Name}
+              isExpanded={expandedId === `map-${summary.theme}`}
+              onToggle={() =>
+                setExpandedId(prev => (prev === `map-${summary.theme}` ? null : `map-${summary.theme}`))
+              }
             />
           ))}
         </div>
@@ -372,7 +395,14 @@ export function FinalResults() {
           </p>
           <div className="growth-steps">
             {growthThemes.map(theme => (
-              <GrowthStep key={theme.theme} theme={theme} />
+              <GrowthStep
+                key={theme.theme}
+                theme={theme}
+                isExpanded={expandedId === `growth-${theme.theme}`}
+                onToggle={() =>
+                  setExpandedId(prev => (prev === `growth-${theme.theme}` ? null : `growth-${theme.theme}`))
+                }
+              />
             ))}
           </div>
         </div>

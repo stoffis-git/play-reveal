@@ -43,19 +43,24 @@ export function ShareCard({ onClose }: { onClose?: () => void }) {
           </button>
         </div>
 
-        <div className="share-preview" style={{ marginTop: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
-            <img
-              src="/reveal_icon.png"
-              alt="Reveal"
-              style={{ width: '36px', height: '36px', objectFit: 'contain' }}
-            />
-            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Total match</div>
-          </div>
-          <div className="share-preview__score" style={{ fontSize: '3.5rem', lineHeight: 1 }}>
+        <div className="share-preview" style={{ marginTop: '16px', position: 'relative' }}>
+          <img
+            src="/reveal_icon.png"
+            alt="Reveal"
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              width: '48px',
+              height: '48px',
+              objectFit: 'contain'
+            }}
+          />
+          <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '6px', textAlign: 'left' }}>Total match</div>
+          <div className="share-preview__score" style={{ fontSize: '3.5rem', lineHeight: 1, textAlign: 'center' }}>
             {displayPercentage}%
           </div>
-          <div className="share-preview__text" style={{ marginTop: '8px' }}>
+          <div className="share-preview__text" style={{ marginTop: '8px', textAlign: 'center' }}>
             {displayScore}/{displayTotal} in sync on Reveal
           </div>
 
