@@ -9,6 +9,8 @@ export function LandingPage() {
   const [partner2Name, setPartner2Name] = useState('');
   const [error, setError] = useState('');
 
+  const showTestPayment = false;
+
   // Check if there's existing progress
   const hasProgress = state.sessionId && (
     state.round1Cards.some(card => card.state !== 'faceDown') ||
@@ -105,7 +107,19 @@ export function LandingPage() {
   };
 
   return (
-    <div className="container" style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+    <div
+      className="container"
+      style={{
+        minHeight: '100vh',
+        maxHeight: '100vh',
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-start',
+        padding: '24px 16px 96px',
+        boxSizing: 'border-box'
+      }}
+    >
       <div className="animate-slide-up">
         {/* Hero */}
         <div className="text-center mb-8">
@@ -214,7 +228,7 @@ export function LandingPage() {
             fontWeight: '500',
             margin: 0
           }}>
-            Playing alone?
+            Your parnter is not around?
           </p>
         </div>
         <button
@@ -226,31 +240,33 @@ export function LandingPage() {
         </button>
 
         {/* Test Payment Button */}
-        <div style={{ 
-          marginBottom: '32px',
-          textAlign: 'center'
-        }}>
-          <button
-            className="btn btn--accent btn--full"
-            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'round1Results' })}
-            style={{
-              maxWidth: '400px',
-              margin: '0 auto',
-              fontSize: '0.9rem',
-              opacity: 0.8
-            }}
-          >
-            ✨ Upgrade to Premium (Test Payment)
-          </button>
-          <p style={{ 
-            fontSize: '0.75rem', 
-            color: 'var(--text-muted)', 
-            marginTop: '8px',
-            fontStyle: 'italic'
+        {showTestPayment && (
+          <div style={{ 
+            marginBottom: '32px',
+            textAlign: 'center'
           }}>
-            Skip to payment for testing
-          </p>
-        </div>
+            <button
+              className="btn btn--accent btn--full"
+              onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'round1Results' })}
+              style={{
+                maxWidth: '400px',
+                margin: '0 auto',
+                fontSize: '0.9rem',
+                opacity: 0.8
+              }}
+            >
+              ✨ Upgrade to Premium (Test Payment)
+            </button>
+            <p style={{ 
+              fontSize: '0.75rem', 
+              color: 'var(--text-muted)', 
+              marginTop: '8px',
+              fontStyle: 'italic'
+            }}>
+              Skip to payment for testing
+            </p>
+          </div>
+        )}
 
         {/* How it works */}
         <div style={{ marginBottom: '32px' }}>
