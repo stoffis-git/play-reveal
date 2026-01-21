@@ -116,7 +116,7 @@ export function LandingPage() {
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-start',
-        padding: '24px 16px 96px',
+        padding: '24px 16px 140px',
         boxSizing: 'border-box'
       }}
     >
