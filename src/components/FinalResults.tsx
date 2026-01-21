@@ -207,12 +207,14 @@ function GrowthStep({ theme }: GrowthStepProps) {
       
       {isExpanded && (
         <div className="growth-step__content">
-          {displaySteps.map((step, i) => (
-            <div key={i} className="growth-step__action">
-              <span className="growth-step__emoji">🎯</span>
-              <p>{step}</p>
-            </div>
-          ))}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '10px' }}>
+            {displaySteps.map((step, i) => (
+              <div key={i} className="growth-step__action">
+                <span className="growth-step__emoji">🎯</span>
+                <p>{step}</p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

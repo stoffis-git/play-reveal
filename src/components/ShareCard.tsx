@@ -44,7 +44,14 @@ export function ShareCard({ onClose }: { onClose?: () => void }) {
         </div>
 
         <div className="share-preview" style={{ marginTop: '16px' }}>
-          <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '6px' }}>Total match</div>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', marginBottom: '10px' }}>
+            <img
+              src="/reveal_icon.png"
+              alt="Reveal"
+              style={{ width: '36px', height: '36px', objectFit: 'contain' }}
+            />
+            <div style={{ fontSize: '0.9rem', opacity: 0.9 }}>Total match</div>
+          </div>
           <div className="share-preview__score" style={{ fontSize: '3.5rem', lineHeight: 1 }}>
             {displayPercentage}%
           </div>
@@ -53,9 +60,7 @@ export function ShareCard({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div style={{ marginTop: '16px', width: '100%', textAlign: 'left' }}>
-            <div style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.95, marginBottom: '8px' }}>
-              Top 3 themes (not all)
-            </div>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.95, marginBottom: '8px' }}>Top 3 themes</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {topThemes.map(t => (
                 <div
@@ -75,7 +80,7 @@ export function ShareCard({ onClose }: { onClose?: () => void }) {
           </div>
 
           <div className="share-preview__logo" style={{ marginTop: '18px' }}>
-            playreveal.com
+            play-reveal.com
           </div>
         </div>
       </div>
