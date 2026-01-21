@@ -1,10 +1,7 @@
-import { useRef } from 'react';
-import { useGame, getMatchCount } from '../store';
-import { Menu } from './Menu';
+import { useGame, getMatchCount, getThemeSummaries } from '../store';
 
-export function ShareCard() {
+export function ShareCard({ onClose }: { onClose?: () => void }) {
   const { state, dispatch } = useGame();
-  const shareRef = useRef<HTMLDivElement>(null);
   
   const round1Matches = getMatchCount(state.round1Cards);
   const round2Matches = getMatchCount(state.round2Cards);
@@ -12,108 +9,76 @@ export function ShareCard() {
   const hasRound2 = state.round2Cards.length > 0;
   const displayScore = hasRound2 ? totalMatches : round1Matches;
   const displayTotal = hasRound2 ? 30 : 15;
+  const displayPercentage = Math.round((displayScore / displayTotal) * 100);
 
-  const handleDownload = async () => {
-    // In a production app, you'd use html2canvas or a server-side renderer
-    // For now, we'll create a simple text-based share
-    const text = `We got ${displayScore}/${displayTotal} on Reveal! 💕\n\nTry it yourself: [URL]`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Reveal - The Game for Couples',
-          text: text
-        });
-      } catch (err) {
-        // User cancelled or error
-        console.log('Share cancelled');
-      }
-    } else {
-      // Fallback: copy to clipboard
-      try {
-        await navigator.clipboard.writeText(text);
-        alert('Copied to clipboard!');
-      } catch (err) {
-        console.error('Failed to copy');
-      }
-    }
-  };
+  const allCards = hasRound2 ? [...state.round1Cards, ...state.round2Cards] : state.round1Cards;
+  const themeSummaries = getThemeSummaries(allCards);
+  const topThemes = [...themeSummaries].sort((a, b) => b.matchPercentage - a.matchPercentage).slice(0, 3);
 
-  const handleCopyLink = async () => {
-    const text = `We got ${displayScore}/${displayTotal} on Reveal! 💕`;
-    try {
-      await navigator.clipboard.writeText(text);
-      alert('Copied to clipboard!');
-    } catch (err) {
-      console.error('Failed to copy');
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+      return;
     }
+    dispatch({ type: 'NAVIGATE_TO', screen: hasRound2 ? 'finalResults' : 'round1Results' });
   };
 
   return (
-    <div className="container animate-slide-up" style={{ 
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center'
-    }}>
-      {/* Header with menu */}
-      <div className="game-header" style={{ marginBottom: '24px' }}>
-        <Menu buttonPosition="inline" />
-        <div style={{ flex: 1 }}></div>
-      </div>
-      <div className="text-center mb-6">
-        <h2>Share Your Score</h2>
-        <p style={{ color: 'var(--text-secondary)' }}>
-          Let the world know how in-sync you are!
-        </p>
-      </div>
+    <div className="question-overlay" onClick={handleClose}>
+      <div className="question-modal animate-modal-in" onClick={(e) => e.stopPropagation()}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+          <div style={{ flex: 1 }}>
+            <h2 style={{ marginBottom: '6px' }}>Share your score</h2>
+            <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+              Take a screenshot of the tile below and share it in your favorite apps.
+            </p>
+          </div>
+          <button
+            className="btn btn--ghost"
+            onClick={handleClose}
+            style={{ padding: '6px 10px', minHeight: 'auto', lineHeight: 1 }}
+            aria-label="Close"
+          >
+            ✕
+          </button>
+        </div>
 
-      {/* Preview card */}
-      <div 
-        ref={shareRef}
-        className="share-preview"
-      >
-        <div style={{ 
-          fontSize: '3rem', 
-          marginBottom: '8px',
-          filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-        }}>
-          💕
-        </div>
-        <div className="share-preview__score">
-          {displayScore}/{displayTotal}
-        </div>
-        <div className="share-preview__text">
-          in sync on Reveal
-        </div>
-        <div className="share-preview__logo">
-          playreveal.com
+        <div className="share-preview" style={{ marginTop: '16px' }}>
+          <div style={{ fontSize: '0.9rem', opacity: 0.9, marginBottom: '6px' }}>Total match</div>
+          <div className="share-preview__score" style={{ fontSize: '3.5rem', lineHeight: 1 }}>
+            {displayPercentage}%
+          </div>
+          <div className="share-preview__text" style={{ marginTop: '8px' }}>
+            {displayScore}/{displayTotal} in sync on Reveal
+          </div>
+
+          <div style={{ marginTop: '16px', width: '100%', textAlign: 'left' }}>
+            <div style={{ fontSize: '0.85rem', fontWeight: 700, opacity: 0.95, marginBottom: '8px' }}>
+              Top 3 themes (not all)
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+              {topThemes.map(t => (
+                <div
+                  key={t.theme}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    fontSize: '0.9rem'
+                  }}
+                >
+                  <span style={{ opacity: 0.95 }}>{t.displayName}</span>
+                  <span style={{ fontWeight: 800 }}>{t.matchPercentage}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="share-preview__logo" style={{ marginTop: '18px' }}>
+            playreveal.com
+          </div>
         </div>
       </div>
-
-      {/* Share options */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
-        <button
-          className="btn btn--primary btn--full"
-          onClick={handleDownload}
-        >
-          Share 📤
-        </button>
-        <button
-          className="btn btn--secondary btn--full"
-          onClick={handleCopyLink}
-        >
-          Copy Text 📋
-        </button>
-      </div>
-
-      {/* Back button */}
-      <button
-        className="btn btn--ghost"
-        onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: hasRound2 ? 'finalResults' : 'round1Results' })}
-      >
-        ← Back to Results
-      </button>
     </div>
   );
 }

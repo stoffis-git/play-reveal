@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { GameProvider, useGame } from './store';
-import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults, ShareCard } from './components';
+import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults } from './components';
 
 function GameRouter() {
   const { state, dispatch } = useGame();
@@ -80,8 +80,6 @@ function GameRouter() {
       return <GameBoard round={2} />;
     case 'finalResults':
       return <FinalResults />;
-    case 'share':
-      return <ShareCard />;
     default:
       return <LandingPage />;
   }

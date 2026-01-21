@@ -5,6 +5,7 @@ interface QuestionInsight {
   matchConversation: string;
   mismatchConversation: string;
   nextStep: string;
+  nextSteps?: string[];
 }
 
 // Insights for each Round 1 question
@@ -108,42 +109,66 @@ export const questionInsights: Record<string, QuestionInsight> = {
 };
 
 // Generic insights by theme for Round 2 questions
-export const themeInsights: Record<Theme, { whyItMatters: string; matchConversation: string; mismatchConversation: string; nextStep: string }> = {
+export const themeInsights: Record<Theme, { whyItMatters: string; matchConversation: string; mismatchConversation: string; nextSteps: string[] }> = {
   conflict: {
     whyItMatters: "How you handle disagreements shapes the long-term health of your relationship. Different conflict styles aren't bad—they just need understanding.",
     matchConversation: "What's working well in how we handle disagreements?",
     mismatchConversation: "When we disagree, what's one thing I could do to help you feel more heard?",
-    nextStep: "After your next conflict, check in about how it felt for both of you."
+    nextSteps: [
+      "After your next conflict, check in about how it felt for both of you.",
+      "Try a “reflect back” moment: each person summarizes the other’s point before responding.",
+      "Pick one recurring disagreement and identify the deeper need underneath it."
+    ]
   },
   support: {
     whyItMatters: "Emotional support is how we feel truly known by our partner. Understanding each other's needs prevents feeling alone in the relationship.",
     matchConversation: "What makes you feel most supported by me?",
     mismatchConversation: "When you need support, what does ideal support from me look like?",
-    nextStep: "Create a 'support menu' of what helps each of you feel cared for."
+    nextSteps: [
+      "Create a 'support menu' of what helps each of you feel cared for.",
+      "Ask before responding: “Do you want empathy or solutions right now?”",
+      "Name one small daily support ritual you can do for each other this week."
+    ]
   },
   dailyLife: {
     whyItMatters: "Daily rhythms add up over time. Small alignments in routines can prevent friction and create shared rituals that strengthen your bond.",
     matchConversation: "What daily routine or habit do you love sharing with me?",
     mismatchConversation: "What's one daily habit we could adjust to work better for both of us?",
-    nextStep: "Pick one shared daily ritual to establish or improve."
+    nextSteps: [
+      "Pick one shared daily ritual to establish or improve.",
+      "List your top 3 friction points at home and choose one to redesign together.",
+      "Try a 10-minute weekly “logistics check-in” (chores, plans, errands)."
+    ]
   },
   intimacy: {
     whyItMatters: "Physical and emotional closeness keeps your bond strong. Different needs are normal—what matters is finding a rhythm that works for both.",
     matchConversation: "What makes you feel closest to me?",
     mismatchConversation: "How can we create more moments of connection that work for both of us?",
-    nextStep: "Schedule regular time for undistracted connection."
+    nextSteps: [
+      "Schedule regular time for undistracted connection.",
+      "Share one specific thing that helps you feel desired/close (and one thing that doesn’t).",
+      "Pick 2 moments this week to initiate affection intentionally (in your partner’s style)."
+    ]
   },
   future: {
     whyItMatters: "A shared vision creates shared motivation. Understanding where your futures align—and differ—helps you build toward common goals.",
     matchConversation: "What excites you most about building our future together?",
     mismatchConversation: "What's one dream you have that you'd like us to explore together?",
-    nextStep: "Create a shared 'bucket list' of things you want to experience together."
+    nextSteps: [
+      "Create a shared 'bucket list' of things you want to experience together.",
+      "Schedule a short “dreams date” to compare your next 12 months priorities.",
+      "Pick one shared goal and decide the first tiny step you’ll take this week."
+    ]
   },
   growth: {
     whyItMatters: "A healthy relationship helps both partners become better versions of themselves. Feeling safe to grow and be vulnerable is essential.",
     matchConversation: "How has our relationship helped you grow as a person?",
     mismatchConversation: "Is there something you want to explore or change that you'd like my support with?",
-    nextStep: "Share one personal goal and discuss how you can support each other."
+    nextSteps: [
+      "Share one personal goal and discuss how you can support each other.",
+      "Try a weekly “appreciation + request” check-in: one thank-you, one small ask.",
+      "Name one sensitive topic to approach gently this week—and agree on a safe way to start."
+    ]
   }
 };
 
@@ -1241,13 +1266,22 @@ export const round2QuestionInsights: Record<string, QuestionInsight> = {
 export function getInsightForQuestion(questionId: string, theme: Theme): QuestionInsight {
   // First try to get specific insight for this question (Round 1)
   if (questionInsights[questionId]) {
-    return questionInsights[questionId];
+    const insight = questionInsights[questionId];
+    return { ...insight, nextSteps: insight.nextSteps ?? [insight.nextStep] };
   }
   // Then try Round 2 specific insights
   if (round2QuestionInsights[questionId]) {
-    return round2QuestionInsights[questionId];
+    const insight = round2QuestionInsights[questionId];
+    return { ...insight, nextSteps: insight.nextSteps ?? [insight.nextStep] };
   }
   // Fall back to theme-based insight
-  return themeInsights[theme];
+  const themeInsight = themeInsights[theme];
+  return {
+    whyItMatters: themeInsight.whyItMatters,
+    matchConversation: themeInsight.matchConversation,
+    mismatchConversation: themeInsight.mismatchConversation,
+    nextSteps: themeInsight.nextSteps,
+    nextStep: themeInsight.nextSteps[0] ?? ''
+  };
 }
 

@@ -4,6 +4,7 @@ import { Menu } from './Menu';
 import { themeColors } from '../types';
 import type { Card, ThemeSummary } from '../types';
 import { getInsightForQuestion } from '../insights';
+import { ShareCard } from './ShareCard';
 
 // More granular score tiers
 function getDetailedScoreTier(matches: number, total: number): { 
@@ -185,6 +186,12 @@ function GrowthStep({ theme }: GrowthStepProps) {
   // For growth steps, use a generic theme insight since we don't have a specific card
   const insight = getInsightForQuestion('', theme.theme);
   const themeColor = themeColors[theme.theme];
+  const steps = insight.nextSteps && insight.nextSteps.length > 0 ? insight.nextSteps : [insight.nextStep];
+  const stepCount =
+    theme.matchPercentage < 40 ? 3 :
+    theme.matchPercentage < 55 ? 2 :
+    1;
+  const displaySteps = steps.slice(0, stepCount);
 
   return (
     <div className="growth-step">
@@ -200,10 +207,12 @@ function GrowthStep({ theme }: GrowthStepProps) {
       
       {isExpanded && (
         <div className="growth-step__content">
-          <div className="growth-step__action">
-            <span className="growth-step__emoji">🎯</span>
-            <p>{insight.nextStep}</p>
-          </div>
+          {displaySteps.map((step, i) => (
+            <div key={i} className="growth-step__action">
+              <span className="growth-step__emoji">🎯</span>
+              <p>{step}</p>
+            </div>
+          ))}
         </div>
       )}
     </div>
@@ -212,10 +221,12 @@ function GrowthStep({ theme }: GrowthStepProps) {
 
 export function FinalResults() {
   const { state, dispatch } = useGame();
+  const [showShareOverlay, setShowShareOverlay] = useState(false);
   
   const round1Matches = getMatchCount(state.round1Cards);
   const round2Matches = getMatchCount(state.round2Cards);
   const totalMatches = round1Matches + round2Matches;
+  const totalMatchPercentage = Math.round((totalMatches / 30) * 100);
   
   const allCards = [...state.round1Cards, ...state.round2Cards];
   const themeSummaries = getThemeSummaries(allCards);
@@ -225,7 +236,7 @@ export function FinalResults() {
   const growthThemes = themeSummaries
     .filter(s => s.matchPercentage < 70)
     .sort((a, b) => a.matchPercentage - b.matchPercentage)
-    .slice(0, 3);
+    .slice(0, 5);
 
   return (
     <div className="container animate-slide-up" style={{ paddingBottom: '40px' }}>
@@ -282,7 +293,15 @@ export function FinalResults() {
 
         {/* Tier display */}
         <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>{tier.emoji}</div>
+          <div style={{ 
+            fontSize: '3rem',
+            fontWeight: '800',
+            letterSpacing: '-1px',
+            color: tier.color,
+            marginBottom: '8px'
+          }}>
+            {totalMatchPercentage}%
+          </div>
           <div style={{ 
             fontSize: '1.5rem', 
             fontWeight: '700',
@@ -380,7 +399,7 @@ export function FinalResults() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             className="btn btn--primary btn--full"
-            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'share' })}
+            onClick={() => setShowShareOverlay(true)}
           >
             Share Your Score 📤
           </button>
@@ -392,6 +411,9 @@ export function FinalResults() {
           </button>
         </div>
       </div>
+      {showShareOverlay && (
+        <ShareCard onClose={() => setShowShareOverlay(false)} />
+      )}
     </div>
   );
 }

@@ -21,6 +21,7 @@ export function GameBoard({ round }: GameBoardProps) {
   const { state, dispatch } = useGame();
   const [showIntro, setShowIntro] = useState(true); // Show "whose turn" intro
   const [showPassDevice, setShowPassDevice] = useState(false);
+  const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
@@ -175,6 +176,49 @@ export function GameBoard({ round }: GameBoardProps) {
     if (round !== 2 || state.round1Cards.length === 0) return [];
     return getThemeSummaries(state.round1Cards);
   }, [round, state.round1Cards]);
+
+  const isFirstPartner2Handoff = showPassDevice && state.currentPlayer === 2 && !hasShownPartner2Share;
+
+  const handleSendPartnerReminder = async () => {
+    const url = window.location.origin;
+    const text =
+      `Let’s play this together later: Reveal – the game for couples.\n\n` +
+      `Want to play tonight? If yes, open this on one phone when we’re together.`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Reveal – Game for Couples',
+          text,
+          url
+        });
+        return;
+      }
+    } catch {
+      // Ignore share errors and fall through to clipboard fallback
+    }
+
+    try {
+      await navigator.clipboard.writeText(`${text}\n\n${url}`);
+      alert('Reminder copied. Paste it into your favorite chat.');
+    } catch {
+      alert('Could not copy. Please copy this link manually: ' + url);
+    }
+  };
+
+  const handleCopyPartnerReminder = async () => {
+    const url = window.location.origin;
+    const text =
+      `Let’s play this together later: Reveal – the game for couples.\n\n` +
+      `Want to play tonight? If yes, open this on one phone when we’re together.\n\n` +
+      url;
+    try {
+      await navigator.clipboard.writeText(text);
+      alert('Copied. Paste it into your favorite chat.');
+    } catch {
+      alert('Could not copy. Please copy this link manually: ' + url);
+    }
+  };
 
   // Get total card count for a theme in Round 1
   const getThemeCardCount = (theme: Theme): number => {
@@ -462,9 +506,41 @@ export function GameBoard({ round }: GameBoardProps) {
           <div className="pass-device__icon">📱</div>
           <h2 className="pass-device__text">Pass to</h2>
           <p className="pass-device__name">{state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}</p>
-          <button className="btn" onClick={() => setShowPassDevice(false)}>
+          <button
+            className="btn btn--primary btn--full"
+            onClick={() => {
+              if (isFirstPartner2Handoff) setHasShownPartner2Share(true);
+              setShowPassDevice(false);
+            }}
+          >
             I'm {state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
           </button>
+          {isFirstPartner2Handoff && (
+            <div style={{ marginTop: '14px', width: '100%', maxWidth: '420px' }}>
+              <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'var(--text-secondary)', textAlign: 'center' }}>
+                Not together right now? Send this to your partner to play later.
+              </p>
+              <button
+                className="btn btn--secondary btn--full"
+                onClick={handleSendPartnerReminder}
+                style={{ marginTop: 0 }}
+              >
+                Send to partner to play later
+              </button>
+              <button
+                className="btn btn--ghost"
+                onClick={handleCopyPartnerReminder}
+                style={{
+                  marginTop: '8px',
+                  width: '100%',
+                  fontSize: '0.85rem',
+                  opacity: 0.9
+                }}
+              >
+                Copy link
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
