@@ -234,7 +234,7 @@ export function LandingPage() {
         <button
           className="btn btn--secondary btn--full"
           onClick={handleSendReminder}
-          style={{ maxWidth: '400px', margin: '0 auto 24px' }}
+          style={{ maxWidth: '250px', margin: '0 auto 24px' }}
         >
           Send to partner to play later
         </button>
