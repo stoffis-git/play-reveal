@@ -270,7 +270,7 @@ export function LandingPage() {
 
         {/* How it works */}
         <div style={{ marginBottom: '32px' }}>
-          <h3 className="text-center mb-4" style={{ fontSize: '1.125rem', color: 'var(--text-secondary)' }}>
+          <h3 className="text-center mb-4" style={{ fontSize: '1.35rem', color: 'var(--text-secondary)' }}>
             How it works
           </h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
