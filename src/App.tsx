@@ -1,9 +1,22 @@
 import { useEffect } from 'react';
 import { GameProvider, useGame } from './store';
-import { LandingPage, GameBoard, Round1Results, PaymentSuccess, FinalResults } from './components';
+import { LandingPage, RemotePaymentScreen, RemoteSessionSetup, GameBoard, Round1Results, PaymentSuccess, FinalResults } from './components';
+import { recordPayment } from './services/paymentTracking';
 
 function GameRouter() {
   const { state, dispatch } = useGame();
+
+  // Handle invite links: /play/{CODE}
+  useEffect(() => {
+    const path = window.location.pathname;
+    const match = path.match(/^\/play\/([A-Za-z0-9]{4,12})\/?$/);
+    if (!match) return;
+    const code = match[1].toUpperCase();
+
+    dispatch({ type: 'SELECT_MODE', mode: 'remote' });
+    dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
+    dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
+  }, [dispatch]);
 
   // Prevent zoom on screen changes - reset viewport scale
   useEffect(() => {
@@ -54,19 +67,37 @@ function GameRouter() {
       
       // Mark payment as complete (saves payment status to localStorage)
       dispatch({ type: 'COMPLETE_PAYMENT' });
+      void recordPayment({ checkoutId });
+
+      // Decide where to route after payment based on purpose
+      let purpose: string | null = null;
+      try {
+        purpose = localStorage.getItem('reveal-payment-purpose');
+        localStorage.removeItem('reveal-payment-purpose');
+      } catch {
+        // ignore
+      }
       
       // Clean up URL immediately to prevent ERR_NAME_NOT_RESOLVED and re-triggering
       window.history.replaceState({}, '', window.location.pathname);
       
-      // Always show PaymentSuccess screen so users can see the confirmation
-      // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
-      dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      if (purpose === 'remote') {
+        dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
+      } else {
+        // Always show PaymentSuccess screen so users can see the confirmation
+        // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
+        dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      }
     }
   }, [dispatch, state.round1Complete]);
 
   switch (state.currentScreen) {
     case 'landing':
       return <LandingPage />;
+    case 'remotePayment':
+      return <RemotePaymentScreen />;
+    case 'remoteSetup':
+      return <RemoteSessionSetup />;
     case 'round1':
       return <GameBoard round={1} />;
     case 'round1Results':

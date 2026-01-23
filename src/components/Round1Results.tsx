@@ -2,6 +2,7 @@ import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuest
 import { Menu } from './Menu';
 import { themeColors } from '../types';
 import { getInsightForQuestion } from '../insights';
+import { recordPayment } from '../services/paymentTracking';
 
 export function Round1Results() {
   const { state, dispatch } = useGame();
@@ -48,6 +49,7 @@ export function Round1Results() {
   const handleManualUnlock = () => {
     // User manually confirms they've paid (trust-based, no backend verification)
     dispatch({ type: 'COMPLETE_PAYMENT' });
+    void recordPayment({ checkoutId: localStorage.getItem('reveal-checkout-id') });
     // Clear the flag
     try {
       localStorage.removeItem('reveal-payment-initiated');
@@ -81,7 +83,11 @@ export function Round1Results() {
   };
 
   const handleStartRound2 = () => {
-    // User has already paid, navigate directly to Round 2
+    // In remote mode, only the host should generate Round 2 cards (UUIDs) and then sync a snapshot.
+    if (state.gameMode === 'remote' && state.remotePlayerId !== 1) {
+      alert('Waiting for your partner to start Round 2.');
+      return;
+    }
     dispatch({ type: 'START_ROUND_2' });
   };
 
@@ -282,7 +288,7 @@ export function Round1Results() {
                       fontWeight: '600',
                       color: 'var(--partner1)'
                     }}>
-                      {state.hasPaid ? '🔒 Unlock after Round 2' : '🔒 Unlock below'}
+                      {(state.hasPaid || state.remoteSessionPaid) ? '🔒 Unlock after Round 2' : '🔒 Unlock below'}
                     </span>
                   </div>
                 </div>
@@ -293,7 +299,7 @@ export function Round1Results() {
       )}
 
       {/* Combined Unlock Banner with Price and Features - only show if not paid */}
-      {!state.hasPaid && (
+      {!(state.hasPaid || state.remoteSessionPaid) && (
         <div style={{ 
           background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
           borderRadius: '16px',
@@ -375,7 +381,7 @@ export function Round1Results() {
       )}
 
       {/* CTAs */}
-      {state.hasPaid ? (
+      {(state.hasPaid || state.remoteSessionPaid) ? (
         // User has already paid - show direct Round 2 button
         <>
           <button

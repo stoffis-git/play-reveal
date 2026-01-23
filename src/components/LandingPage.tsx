@@ -75,10 +75,39 @@ export function LandingPage() {
       return;
     }
     dispatch({
+      type: 'SELECT_MODE',
+      mode: 'local'
+    });
+    dispatch({
       type: 'START_GAME',
       partner1Name: partner1Name.trim(),
       partner2Name: partner2Name.trim()
     });
+  };
+
+  const handleRemote = () => {
+    if (!isValid) {
+      if (partner1Name.trim().toLowerCase() === partner2Name.trim().toLowerCase()) {
+        setError('Names must be different');
+      }
+      return;
+    }
+
+    dispatch({
+      type: 'SET_PARTNER_NAMES',
+      partner1Name: partner1Name.trim(),
+      partner2Name: partner2Name.trim()
+    });
+    dispatch({ type: 'SELECT_MODE', mode: 'remote' });
+
+    // If user came via /play/{code}, they're joining as player 2 and should not pay.
+    if (state.remoteSessionId && state.remotePlayerId === 2) {
+      dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
+      return;
+    }
+
+    // Host must be premium before creating a session.
+    dispatch({ type: 'NAVIGATE_TO', screen: state.hasPaid ? 'remoteSetup' : 'remotePayment' });
   };
 
   const handleSendReminder = async () => {
@@ -197,24 +226,60 @@ export function LandingPage() {
               {error}
             </p>
           )}
-          <button
-            className="btn btn--primary btn--full"
-            onClick={handleStart}
-            disabled={!hasProgress && !isValid}
-          >
-            {hasProgress ? '→ Continue Playing' : 'Start Game'}
-          </button>
-          {!hasProgress && (
-            <p style={{ 
-              fontSize: '0.75rem', 
-              color: 'var(--text-muted)', 
-              marginTop: '8px',
-              fontStyle: 'italic',
-              textAlign: 'center'
-            }}>
-              Free to play
-            </p>
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <div style={{ position: 'relative' }}>
+              <button
+                className="btn btn--primary btn--full"
+                onClick={handleStart}
+                disabled={!hasProgress && !isValid}
+              >
+                {hasProgress ? '→ Continue Playing' : 'Play Together'}
+              </button>
+              {!hasProgress && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  background: 'var(--match-green)',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  fontWeight: '700',
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                }}>
+                  FREE
+                </span>
+              )}
+            </div>
+            {!hasProgress && (
+              <div style={{ position: 'relative' }}>
+                <button
+                  className="btn btn--accent btn--full"
+                  onClick={handleRemote}
+                  disabled={!isValid}
+                >
+                  Play Remotely
+                </button>
+                <span style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  fontWeight: '700',
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                }}>
+                  PREMIUM
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         <div style={{ 
@@ -296,16 +361,6 @@ export function LandingPage() {
               </div>
             ))}
           </div>
-          <p
-            style={{
-              marginTop: '12px',
-              fontSize: '0.85rem',
-              color: 'var(--text-muted)',
-              textAlign: 'center'
-            }}
-          >
-            Note: Both players need to be present.
-          </p>
         </div>
 
         {/* Trust indicators */}

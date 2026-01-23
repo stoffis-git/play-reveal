@@ -39,6 +39,8 @@ export interface Card {
 
 export type GameScreen = 
   | 'landing'
+  | 'remotePayment'
+  | 'remoteSetup'
   | 'round1'
   | 'round1Results'
   | 'paywall'
@@ -59,6 +61,13 @@ export interface GameState {
   round2Complete: boolean;
   hasPaid: boolean;
   selectedCardIndex: number | null;
+
+  // Remote mode
+  gameMode: 'local' | 'remote';
+  remoteSessionId: string | null;
+  remotePlayerId: 1 | 2 | null;
+  isRemoteConnected: boolean;
+  remoteSessionPaid: boolean;
 }
 
 export interface ThemeSummary {

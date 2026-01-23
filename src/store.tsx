@@ -1,10 +1,11 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import type { GameState, Card, Answer, GameScreen, Theme, ThemeSummary } from './types';
 import { themeDisplayNames } from './types';
 import { round1Questions, getQuestionById } from './questions';
 import { selectRound2Questions } from './algorithm';
+import { SupabaseSync } from './services/supabaseSync';
 
 const STORAGE_KEY = 'relationship-game-state';
 // Separate key for payment to persist across new sessions
@@ -19,6 +20,7 @@ const NAMES_STORAGE_KEY = 'relationship-game-partner-names';
 
 type GameAction =
   | { type: 'START_GAME'; partner1Name: string; partner2Name: string }
+  | { type: 'SET_PARTNER_NAMES'; partner1Name: string; partner2Name: string }
   | { type: 'CONTINUE_GAME' }
   | { type: 'SELECT_CARD'; index: number }
   | { type: 'ANSWER_QUESTION'; answer: 'A' | 'B' }
@@ -27,6 +29,11 @@ type GameAction =
   | { type: 'START_ROUND_2' }
   | { type: 'COMPLETE_ROUND'; round: 1 | 2 }
   | { type: 'REPLAY_ROUND'; round: 1 | 2 }
+  | { type: 'SELECT_MODE'; mode: 'local' | 'remote' }
+  | { type: 'SET_REMOTE_SESSION'; sessionId: string | null; playerId: 1 | 2 | null }
+  | { type: 'SET_REMOTE_CONNECTION'; connected: boolean }
+  | { type: 'SET_REMOTE_SESSION_PAID'; paid: boolean }
+  | { type: 'APPLY_REMOTE_STATE'; state: Partial<GameState> }
   | { type: 'RESET_GAME' };
 
 function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
@@ -57,11 +64,32 @@ const initialState: GameState = {
   round1Complete: false,
   round2Complete: false,
   hasPaid: false,
-  selectedCardIndex: null
+  selectedCardIndex: null,
+
+  gameMode: 'local',
+  remoteSessionId: null,
+  remotePlayerId: null,
+  isRemoteConnected: false,
+  remoteSessionPaid: false
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
   switch (action.type) {
+    case 'SET_PARTNER_NAMES':
+      try {
+        localStorage.setItem(NAMES_STORAGE_KEY, JSON.stringify({
+          partner1Name: action.partner1Name,
+          partner2Name: action.partner2Name
+        }));
+      } catch {
+        // Ignore storage errors
+      }
+      return {
+        ...state,
+        partner1Name: action.partner1Name,
+        partner2Name: action.partner2Name
+      };
+
     case 'START_GAME':
       // Persist names separately so they survive across sessions
       try {
@@ -90,7 +118,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (state.round2Complete) {
         return { ...state, currentScreen: 'finalResults' };
       } else if (state.round1Complete) {
-        return { ...state, currentScreen: state.hasPaid ? 'round2' : 'round1Results' };
+        // In remote mode, the session may be paid even if this device is not premium.
+        return { ...state, currentScreen: state.hasPaid || state.remoteSessionPaid ? 'round2' : 'round1Results' };
       } else {
         return { ...state, currentScreen: 'round1' };
       }
@@ -259,6 +288,39 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       }
       return initialState;
 
+    case 'SELECT_MODE':
+      return {
+        ...state,
+        gameMode: action.mode
+      };
+
+    case 'SET_REMOTE_SESSION':
+      return {
+        ...state,
+        remoteSessionId: action.sessionId,
+        remotePlayerId: action.playerId,
+        isRemoteConnected: false,
+        remoteSessionPaid: state.remoteSessionPaid && action.sessionId === state.remoteSessionId ? state.remoteSessionPaid : false
+      };
+
+    case 'SET_REMOTE_CONNECTION':
+      return {
+        ...state,
+        isRemoteConnected: action.connected
+      };
+
+    case 'SET_REMOTE_SESSION_PAID':
+      return {
+        ...state,
+        remoteSessionPaid: action.paid
+      };
+
+    case 'APPLY_REMOTE_STATE':
+      return {
+        ...state,
+        ...action.state
+      };
+
     default:
       return state;
   }
@@ -377,7 +439,13 @@ function persistState(state: GameState) {
         round1Complete: state.round1Complete,
         round2Complete: state.round2Complete,
         hasPaid: state.hasPaid,
-        selectedCardIndex: state.selectedCardIndex
+        selectedCardIndex: state.selectedCardIndex,
+
+        gameMode: state.gameMode,
+        remoteSessionId: state.remoteSessionId,
+        remotePlayerId: state.remotePlayerId,
+        isRemoteConnected: state.isRemoteConnected,
+        remoteSessionPaid: state.remoteSessionPaid
       }));
     }
   } catch {
@@ -386,7 +454,7 @@ function persistState(state: GameState) {
 }
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [state, dispatch] = useReducer(gameReducer, initialState, (initial) => {
+  const [state, rawDispatch] = useReducer(gameReducer, initialState, (initial) => {
     // Load persisted state on initialization
     const persisted = loadPersistedState();
     
@@ -420,6 +488,149 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     return { ...initial, ...persisted } as GameState;
   });
+
+  const stateRef = useRef<GameState>(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  const syncRef = useRef<SupabaseSync | null>(null);
+  const suppressBroadcastRef = useRef(false);
+  const pendingHostSnapshotRef = useRef(false);
+
+  const internalDispatch = (action: GameAction) => {
+    suppressBroadcastRef.current = true;
+    rawDispatch(action);
+    suppressBroadcastRef.current = false;
+  };
+
+  const getShareableState = (s: GameState): Partial<GameState> => ({
+    sessionId: s.sessionId,
+    partner1Name: s.partner1Name,
+    partner2Name: s.partner2Name,
+    currentPlayer: s.currentPlayer,
+    currentScreen: s.currentScreen,
+    round1Cards: s.round1Cards,
+    round2Cards: s.round2Cards,
+    round1Complete: s.round1Complete,
+    round2Complete: s.round2Complete,
+    selectedCardIndex: s.selectedCardIndex,
+    gameMode: 'remote',
+    remoteSessionPaid: true
+    // Intentionally do NOT include hasPaid or remotePlayerId (local-only)
+  });
+
+  const shouldBroadcast = (action: GameAction): boolean => {
+    switch (action.type) {
+      case 'SELECT_CARD':
+      case 'ANSWER_QUESTION':
+      case 'COMPLETE_ROUND':
+      case 'NAVIGATE_TO':
+      case 'APPLY_REMOTE_STATE':
+        return true;
+      default:
+        return false;
+    }
+  };
+
+  const dispatch: React.Dispatch<GameAction> = (action) => {
+    // Some actions generate new UUIDs (cards). In remote mode we rely on the host
+    // to send a full snapshot after these actions so both devices stay identical.
+    if (
+      !suppressBroadcastRef.current &&
+      stateRef.current.gameMode === 'remote' &&
+      stateRef.current.remotePlayerId === 1 &&
+      stateRef.current.remoteSessionId &&
+      (action.type === 'START_ROUND_2')
+    ) {
+      pendingHostSnapshotRef.current = true;
+    }
+
+    rawDispatch(action);
+
+    const s = stateRef.current;
+    if (
+      suppressBroadcastRef.current ||
+      s.gameMode !== 'remote' ||
+      !s.remoteSessionId ||
+      !shouldBroadcast(action)
+    ) {
+      return;
+    }
+
+    // Broadcast action to the other player
+    void syncRef.current?.sendAction(action);
+  };
+
+  // Connect/disconnect Supabase broadcast channel for remote sessions
+  useEffect(() => {
+    const sessionId = state.remoteSessionId;
+    if (state.gameMode !== 'remote' || !sessionId) {
+      internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
+      void syncRef.current?.disconnect();
+      return;
+    }
+
+    if (!syncRef.current) syncRef.current = new SupabaseSync();
+
+    void syncRef.current.connect({
+      sessionId,
+      onStatus: (status) => {
+        internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
+      },
+      onMessage: (msg) => {
+        if (msg.type === 'action') {
+          // Apply actions from the other player without re-broadcasting
+          suppressBroadcastRef.current = true;
+          try {
+            rawDispatch(msg.payload as GameAction);
+          } finally {
+            suppressBroadcastRef.current = false;
+          }
+          return;
+        }
+
+        if (msg.type === 'session_paid') {
+          internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
+          return;
+        }
+
+        if (msg.type === 'presence') {
+          // If I'm host and player2 joins, start the game and sync snapshot.
+          const current = stateRef.current;
+          if (current.remotePlayerId === 1 && msg.payload.player === 2) {
+            internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
+            pendingHostSnapshotRef.current = true;
+            internalDispatch({ type: 'START_GAME', partner1Name: current.partner1Name, partner2Name: current.partner2Name });
+          }
+        }
+      }
+    });
+
+    // Announce presence
+    const playerId = state.remotePlayerId;
+    if (playerId) {
+      void syncRef.current.sendPresence(playerId);
+    }
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
+
+  // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
+  useEffect(() => {
+    const s = state;
+    if (
+      s.gameMode !== 'remote' ||
+      s.remotePlayerId !== 1 ||
+      !s.remoteSessionId ||
+      !s.isRemoteConnected ||
+      !pendingHostSnapshotRef.current
+    ) {
+      return;
+    }
+
+    pendingHostSnapshotRef.current = false;
+    void syncRef.current?.sendSessionPaid();
+    void syncRef.current?.sendAction({ type: 'APPLY_REMOTE_STATE', state: getShareableState(s) });
+  }, [state]);
 
   // Persist state on every change
   useEffect(() => {

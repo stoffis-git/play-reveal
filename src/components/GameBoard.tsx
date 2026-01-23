@@ -32,6 +32,7 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
+  const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
   const matchCount = getMatchCount(cards);
   const revealedCount = cards.filter(c => c.state === 'revealed').length;
 
@@ -99,6 +100,7 @@ export function GameBoard({ round }: GameBoardProps) {
   };
 
   const handleCardClick = (index: number) => {
+    if (isRemote && !state.isRemoteConnected) return;
     const card = cards[index];
     const cardEl = cardRefs.current[index];
     
@@ -309,6 +311,19 @@ export function GameBoard({ round }: GameBoardProps) {
             {currentPlayerName.toUpperCase()}'S TURN
           </div>
         </div>
+        {isRemote && (
+          <span style={{
+            background: 'rgba(0,0,0,0.06)',
+            color: 'var(--text-secondary)',
+            padding: '4px 10px',
+            borderRadius: '100px',
+            fontSize: '0.625rem',
+            fontWeight: '700',
+            letterSpacing: '1px'
+          }}>
+            🌐 REMOTE
+          </span>
+        )}
         <div className="progress-counter-header">
           {revealedCount}/15
         </div>
@@ -416,6 +431,19 @@ export function GameBoard({ round }: GameBoardProps) {
           );
         })}
       </div>
+
+      {/* Remote connection overlay */}
+      {isRemote && !state.isRemoteConnected && (
+        <div className="question-overlay">
+          <div className="question-modal animate-modal-in" style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>⏳</div>
+            <h3 style={{ margin: 0, marginBottom: '6px' }}>Connecting…</h3>
+            <p style={{ margin: 0, color: 'var(--text-secondary)' }}>
+              Please wait a moment.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Animated card transition */}
       {isAnimating && cardPosition && selectedCard && (

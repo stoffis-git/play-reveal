@@ -1,4 +1,6 @@
 export { LandingPage } from './LandingPage';
+export { RemotePaymentScreen } from './RemotePaymentScreen';
+export { RemoteSessionSetup } from './RemoteSessionSetup';
 export { GameBoard } from './GameBoard';
 export { Round1Results } from './Round1Results';
 export { PaymentSuccess } from './PaymentSuccess';
