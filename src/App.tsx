@@ -8,10 +8,19 @@ function GameRouter() {
 
   // Handle invite links: /play/{CODE}
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:11',message:'GameRouter route effect started',data:{pathname:window.location.pathname,href:window.location.href},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3,H4,H5'})}).catch(()=>{});
+    // #endregion
     const path = window.location.pathname;
     const match = path.match(/^\/play\/([A-Za-z0-9]{4,12})\/?$/);
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:14',message:'Route match result',data:{path:path,matchResult:match,matchedCode:match?match[1]:null},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H4'})}).catch(()=>{});
+    // #endregion
     if (!match) return;
     const code = match[1].toUpperCase();
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:17',message:'Dispatching remote session join',data:{code:code,playerId:2},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H5'})}).catch(()=>{});
+    // #endregion
 
     dispatch({ type: 'SELECT_MODE', mode: 'remote' });
     dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
@@ -119,6 +128,9 @@ function GameRouter() {
 }
 
 function App() {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:121',message:'App component rendering',data:{pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3,H5'})}).catch(()=>{});
+  // #endregion
   return (
     <GameProvider>
       <RemoteSessionOverlay />
