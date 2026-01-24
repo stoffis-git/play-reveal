@@ -17,6 +17,37 @@ const STORAGE_KEY = 'relationship-game-state';
 const PAYMENT_STORAGE_KEY = 'relationship-game-payment-status';
 // Separate key for partner names to persist across sessions
 const NAMES_STORAGE_KEY = 'relationship-game-partner-names';
+// Separate key for remote session to persist across game resets
+const REMOTE_SESSION_STORAGE_KEY = 'relationship-game-remote-session';
+
+function saveRemoteSession(sessionId: string | null, playerId: 1 | 2 | null) {
+  try {
+    if (sessionId && playerId) {
+      localStorage.setItem(REMOTE_SESSION_STORAGE_KEY, JSON.stringify({
+        sessionId,
+        playerId,
+        timestamp: Date.now()
+      }));
+    } else {
+      localStorage.removeItem(REMOTE_SESSION_STORAGE_KEY);
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+function loadRemoteSession(): { sessionId: string | null; playerId: 1 | 2 | null } {
+  try {
+    const stored = localStorage.getItem(REMOTE_SESSION_STORAGE_KEY);
+    if (stored) {
+      const { sessionId, playerId } = JSON.parse(stored);
+      return { sessionId, playerId };
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return { sessionId: null, playerId: null };
+}
 
 type GameAction =
   | { type: 'START_GAME'; partner1Name: string; partner2Name: string }
@@ -54,6 +85,8 @@ function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
   }));
 }
 
+const storedRemoteSession = loadRemoteSession();
+
 const initialState: GameState = {
   sessionId: '',
   partner1Name: '',
@@ -68,8 +101,8 @@ const initialState: GameState = {
   selectedCardIndex: null,
 
   gameMode: 'local',
-  remoteSessionId: null,
-  remotePlayerId: null,
+  remoteSessionId: storedRemoteSession.sessionId,
+  remotePlayerId: storedRemoteSession.playerId,
   isRemoteConnected: false,
   remoteSessionPaid: false
 };
@@ -281,13 +314,22 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     case 'RESET_GAME':
       try {
         localStorage.removeItem(STORAGE_KEY);
-        // Note: We intentionally keep PAYMENT_STORAGE_KEY so payment status persists
-        // even after resetting game progress. Users would need to clear browser data
-        // or use a different device/browser to lose payment status.
+        // Note: We intentionally keep PAYMENT_STORAGE_KEY and REMOTE_SESSION_STORAGE_KEY
+        // so payment status and remote session persist even after resetting game progress.
       } catch {
         // Ignore storage errors
       }
-      return initialState;
+      return {
+        ...initialState,
+        // Preserve remote session across resets
+        remoteSessionId: state.remoteSessionId,
+        remotePlayerId: state.remotePlayerId,
+        isRemoteConnected: state.isRemoteConnected,
+        remoteSessionPaid: state.remoteSessionPaid,
+        hasPaid: state.hasPaid,
+        partner1Name: state.partner1Name,
+        partner2Name: state.partner2Name
+      };
 
     case 'SELECT_MODE':
       return {
@@ -296,6 +338,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'SET_REMOTE_SESSION':
+      saveRemoteSession(action.sessionId, action.playerId);
       return {
         ...state,
         remoteSessionId: action.sessionId,
@@ -323,6 +366,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'CANCEL_REMOTE_SESSION':
+      saveRemoteSession(null, null);
       return {
         ...state,
         gameMode: 'local',

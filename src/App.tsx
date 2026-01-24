@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { GameProvider, useGame } from './store';
-import { LandingPage, RemotePaymentScreen, RemoteSessionSetup, SessionCancelled, GameBoard, Round1Results, PaymentSuccess, FinalResults } from './components';
+import { LandingPage, RemotePaymentScreen, RemoteSessionSetup, SessionCancelled, GameBoard, Round1Results, PaymentSuccess, FinalResults, RemoteSessionOverlay } from './components';
 import { recordPayment } from './services/paymentTracking';
 
 function GameRouter() {
@@ -121,6 +121,7 @@ function GameRouter() {
 function App() {
   return (
     <GameProvider>
+      <RemoteSessionOverlay />
       <GameRouter />
     </GameProvider>
   );

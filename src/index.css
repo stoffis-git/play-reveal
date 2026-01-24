@@ -2137,3 +2137,26 @@ h3 {
   margin: 0;
   line-height: 1.4;
 }
+
+/* Remote Session Overlay Animations */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes compressFromLeft {
+  from {
+    width: calc(100% - 32px);
+    transform: translateX(calc(-50% + 50vw - 16px));
+  }
+  to {
+    width: auto;
+    transform: translateX(0);
+  }
+}

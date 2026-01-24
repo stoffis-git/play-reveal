@@ -154,45 +154,6 @@ export function LandingPage() {
       }}
     >
       <div className="animate-slide-up">
-        {/* Remote Session Waiting Indicator */}
-        {state.gameMode === 'remote' && state.remoteSessionId && state.remotePlayerId === 1 && !state.isRemoteConnected && (
-          <div 
-            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' })}
-            style={{
-              background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
-              borderRadius: '16px',
-              padding: '16px 20px',
-              marginBottom: '20px',
-              cursor: 'pointer',
-              boxShadow: 'var(--card-shadow)',
-              border: '2px solid var(--partner1)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              transition: 'transform 0.2s, box-shadow 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'scale(1)';
-              e.currentTarget.style.boxShadow = 'var(--card-shadow)';
-            }}
-          >
-            <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>⏳</div>
-            <div style={{ flex: 1, textAlign: 'left' }}>
-              <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
-                Waiting for {state.partner2Name || 'your partner'} to join...
-              </div>
-              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                Tap to view session
-              </div>
-            </div>
-            <div style={{ fontSize: '1.2rem', flexShrink: 0 }}>→</div>
-          </div>
-        )}
-
         {/* Hero */}
         <div className="text-center mb-8">
           <div style={{ 
