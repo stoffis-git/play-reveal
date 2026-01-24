@@ -123,8 +123,12 @@ export function LandingPage() {
         });
         return;
       }
-    } catch {
-      // Ignore share errors and fall through to clipboard fallback
+    } catch (err) {
+      // If user aborted the share dialog, don't fall through to clipboard
+      if (err && typeof err === 'object' && 'name' in err && (err as { name?: string }).name === 'AbortError') {
+        return;
+      }
+      // For other errors, fall through to clipboard fallback
     }
 
     try {
@@ -233,7 +237,9 @@ export function LandingPage() {
           marginBottom: '32px'
         }}>
           <div className="input-group">
-            <label className="input-label">Partner 1 (You)</label>
+            <label className="input-label">
+              Partner 1 <span style={{ color: 'var(--text-muted)' }}>You</span>
+            </label>
             <input
               type="text"
               className="input"
