@@ -4,6 +4,7 @@ import { getSupabaseClient } from './supabaseClient';
 export type RemoteMessage =
   | { type: 'action'; payload: unknown }
   | { type: 'session_paid'; payload: { paid: true } }
+  | { type: 'session_cancelled'; payload: { cancelled: true } }
   | { type: 'presence'; payload: { player: 1 | 2 } };
 
 export type RemoteConnectionStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -47,6 +48,10 @@ export class SupabaseSync {
       params.onMessage({ type: 'presence', payload: payload as { player: 1 | 2 } });
     });
 
+    channel.on('broadcast', { event: 'session_cancelled' }, ({ payload }) => {
+      params.onMessage({ type: 'session_cancelled', payload: payload as { cancelled: true } });
+    });
+
     this.channel = channel;
 
     await new Promise<void>((resolve) => {
@@ -84,6 +89,11 @@ export class SupabaseSync {
   async sendPresence(player: 1 | 2): Promise<RealtimeChannelSendResponse | null> {
     if (!this.channel) return null;
     return await this.channel.send({ type: 'broadcast', event: 'presence', payload: { player } });
+  }
+
+  async sendSessionCancelled(): Promise<RealtimeChannelSendResponse | null> {
+    if (!this.channel) return null;
+    return await this.channel.send({ type: 'broadcast', event: 'session_cancelled', payload: { cancelled: true } });
   }
 }
 

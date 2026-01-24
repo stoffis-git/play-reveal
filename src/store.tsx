@@ -34,6 +34,7 @@ type GameAction =
   | { type: 'SET_REMOTE_CONNECTION'; connected: boolean }
   | { type: 'SET_REMOTE_SESSION_PAID'; paid: boolean }
   | { type: 'APPLY_REMOTE_STATE'; state: Partial<GameState> }
+  | { type: 'CANCEL_REMOTE_SESSION' }
   | { type: 'RESET_GAME' };
 
 function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
@@ -321,6 +322,17 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         ...action.state
       };
 
+    case 'CANCEL_REMOTE_SESSION':
+      return {
+        ...state,
+        gameMode: 'local',
+        remoteSessionId: null,
+        remotePlayerId: null,
+        isRemoteConnected: false,
+        remoteSessionPaid: false,
+        currentScreen: 'landing'
+      };
+
     default:
       return state;
   }
@@ -534,6 +546,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   };
 
   const dispatch: React.Dispatch<GameAction> = (action) => {
+    // Handle CANCEL_REMOTE_SESSION: broadcast cancellation before clearing state
+    if (action.type === 'CANCEL_REMOTE_SESSION') {
+      const current = stateRef.current;
+      if (current.gameMode === 'remote' && current.remotePlayerId === 1 && current.remoteSessionId) {
+        // Broadcast cancellation to Player 2 before clearing state
+        void syncRef.current?.sendSessionCancelled();
+      }
+    }
+
     // Some actions generate new UUIDs (cards). In remote mode we rely on the host
     // to send a full snapshot after these actions so both devices stay identical.
     if (
@@ -580,10 +601,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
       },
       onMessage: (msg) => {
         if (msg.type === 'action') {
+          const action = msg.payload as GameAction;
+          
+          // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
+          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
+            const state = action.state as Partial<GameState>;
+            if (state.round1Cards && state.round1Cards.length > 0 && state.currentScreen === 'round1') {
+              // Game has started, navigate Player 2 to Round 1
+              suppressBroadcastRef.current = true;
+              try {
+                rawDispatch(action);
+                internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
+              } finally {
+                suppressBroadcastRef.current = false;
+              }
+              return;
+            }
+          }
+          
           // Apply actions from the other player without re-broadcasting
           suppressBroadcastRef.current = true;
           try {
-            rawDispatch(msg.payload as GameAction);
+            rawDispatch(action);
           } finally {
             suppressBroadcastRef.current = false;
           }
@@ -592,6 +631,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
         if (msg.type === 'session_paid') {
           internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
+          return;
+        }
+
+        if (msg.type === 'session_cancelled') {
+          // Player 2 receives cancellation notification
+          const current = stateRef.current;
+          if (current.remotePlayerId === 2) {
+            internalDispatch({ type: 'CANCEL_REMOTE_SESSION' });
+            internalDispatch({ type: 'NAVIGATE_TO', screen: 'sessionCancelled' });
+          }
           return;
         }
 

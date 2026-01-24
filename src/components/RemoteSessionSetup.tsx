@@ -57,7 +57,17 @@ export function RemoteSessionSetup() {
     }
   };
 
+  const handleCancelSession = () => {
+    dispatch({ type: 'CANCEL_REMOTE_SESSION' });
+  };
+
+  const handleLookAround = () => {
+    // Navigate to landing but keep session active
+    dispatch({ type: 'NAVIGATE_TO', screen: 'landing' });
+  };
+
   const handleBack = () => {
+    // For Player 2 (joiner), this cancels and goes back
     dispatch({ type: 'SET_REMOTE_SESSION', sessionId: null, playerId: null });
     dispatch({ type: 'SELECT_MODE', mode: 'local' });
     dispatch({ type: 'NAVIGATE_TO', screen: 'landing' });
@@ -137,14 +147,38 @@ export function RemoteSessionSetup() {
 
             {/* Joiners are taken here via /play/{code}. Hosts just wait; game will start automatically when partner joins. */}
             {isJoiner && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '8px' }}>
-                You’re connected as Partner 2. Your partner will start the game.
-              </p>
+              <>
+                <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '8px' }}>
+                  You're connected as Partner 2. Your partner will start the game.
+                </p>
+                <button className="btn btn--ghost" style={{ marginTop: '16px' }} onClick={handleBack}>
+                  Leave session
+                </button>
+              </>
             )}
 
-            <button className="btn btn--ghost" style={{ marginTop: '16px' }} onClick={handleBack}>
-              Leave session
-            </button>
+            {!isJoiner && (
+              <>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '12px', maxWidth: '380px', margin: '12px auto 0' }}>
+                  You can explore the app while waiting. You'll be automatically pulled into Round 1 when {state.partner2Name || 'your partner'} joins.
+                </p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '420px', margin: '20px auto 0' }}>
+                  <button 
+                    className="btn btn--secondary btn--full" 
+                    onClick={handleLookAround}
+                    style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+                  >
+                    Look around, while waiting for {state.partner2Name || 'your partner'}
+                  </button>
+                  <button 
+                    className="btn btn--ghost" 
+                    onClick={handleCancelSession}
+                  >
+                    Cancel Session
+                  </button>
+                </div>
+              </>
+            )}
           </>
         )}
 

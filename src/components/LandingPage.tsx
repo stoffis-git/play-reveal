@@ -150,6 +150,45 @@ export function LandingPage() {
       }}
     >
       <div className="animate-slide-up">
+        {/* Remote Session Waiting Indicator */}
+        {state.gameMode === 'remote' && state.remoteSessionId && state.remotePlayerId === 1 && !state.isRemoteConnected && (
+          <div 
+            onClick={() => dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' })}
+            style={{
+              background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
+              borderRadius: '16px',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              cursor: 'pointer',
+              boxShadow: 'var(--card-shadow)',
+              border: '2px solid var(--partner1)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              transition: 'transform 0.2s, box-shadow 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.02)';
+              e.currentTarget.style.boxShadow = '0 8px 24px rgba(0,0,0,0.15)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+              e.currentTarget.style.boxShadow = 'var(--card-shadow)';
+            }}
+          >
+            <div style={{ fontSize: '1.5rem', flexShrink: 0 }}>⏳</div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '2px' }}>
+                Waiting for {state.partner2Name || 'your partner'} to join...
+              </div>
+              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                Tap to view session
+              </div>
+            </div>
+            <div style={{ fontSize: '1.2rem', flexShrink: 0 }}>→</div>
+          </div>
+        )}
+
         {/* Hero */}
         <div className="text-center mb-8">
           <div style={{ 
@@ -181,7 +220,7 @@ export function LandingPage() {
             Discover how in-sync you really are
           </p>
           <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '8px auto 0' }}>
-            A fun and insightful memory card-style game for couples & relationships
+            A fun and insightful memory card-style game for couples & relationships..
           </p>
         </div>
 
@@ -194,7 +233,7 @@ export function LandingPage() {
           marginBottom: '32px'
         }}>
           <div className="input-group">
-            <label className="input-label">Partner 1</label>
+            <label className="input-label">Partner 1 (You)</label>
             <input
               type="text"
               className="input"
@@ -233,25 +272,8 @@ export function LandingPage() {
                 onClick={handleStart}
                 disabled={!hasProgress && !isValid}
               >
-                {hasProgress ? '→ Continue Playing' : 'Play Together'}
+                {hasProgress ? '→ Continue Playing' : 'Play in Person'}
               </button>
-              {!hasProgress && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-6px',
-                  right: '-6px',
-                  background: 'var(--match-green)',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                  fontWeight: '700',
-                  padding: '3px 8px',
-                  borderRadius: '10px',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                }}>
-                  FREE
-                </span>
-              )}
             </div>
             {!hasProgress && (
               <div style={{ position: 'relative' }}>
