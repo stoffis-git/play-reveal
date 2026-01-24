@@ -41,6 +41,7 @@ export type GameScreen =
   | 'landing'
   | 'remotePayment'
   | 'remoteSetup'
+  | 'inviteAcceptance'
   | 'sessionCancelled'
   | 'round1'
   | 'round1Results'

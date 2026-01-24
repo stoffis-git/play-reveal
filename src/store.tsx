@@ -66,6 +66,8 @@ type GameAction =
   | { type: 'SET_REMOTE_SESSION_PAID'; paid: boolean }
   | { type: 'APPLY_REMOTE_STATE'; state: Partial<GameState> }
   | { type: 'CANCEL_REMOTE_SESSION' }
+  | { type: 'ACCEPT_REMOTE_INVITE' }
+  | { type: 'DECLINE_REMOTE_INVITE' }
   | { type: 'RESET_GAME' };
 
 function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
@@ -377,6 +379,26 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentScreen: 'landing'
       };
 
+    case 'ACCEPT_REMOTE_INVITE':
+      // Player 2 explicitly accepts - this will trigger presence send
+      return {
+        ...state,
+        currentScreen: 'remoteSetup' // Temporary, will navigate to round1 after sync
+      };
+
+    case 'DECLINE_REMOTE_INVITE':
+      // Player 2 declines - cancel session and notify Player 1
+      saveRemoteSession(null, null);
+      return {
+        ...state,
+        gameMode: 'local',
+        remoteSessionId: null,
+        remotePlayerId: null,
+        isRemoteConnected: false,
+        remoteSessionPaid: false,
+        currentScreen: 'landing'
+      };
+
     default:
       return state;
   }
@@ -599,6 +621,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
 
+    // Handle DECLINE_REMOTE_INVITE: Player 2 declines, broadcast to Player 1
+    if (action.type === 'DECLINE_REMOTE_INVITE') {
+      const current = stateRef.current;
+      if (current.gameMode === 'remote' && current.remotePlayerId === 2 && current.remoteSessionId) {
+        // Broadcast decline to Player 1 before clearing state
+        void syncRef.current?.sendSessionCancelled();
+      }
+    }
+
     // Some actions generate new UUIDs (cards). In remote mode we rely on the host
     // to send a full snapshot after these actions so both devices stay identical.
     if (
@@ -700,12 +731,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Announce presence
+    // Announce presence - but ONLY if Player 2 has explicitly accepted
     const playerId = state.remotePlayerId;
-    if (playerId) {
+    const shouldAnnouncePresence = playerId === 1 || 
+      (playerId === 2 && state.currentScreen !== 'inviteAcceptance');
+
+    if (playerId && shouldAnnouncePresence) {
       void syncRef.current.sendPresence(playerId);
     }
-  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen]);
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
