@@ -5,6 +5,14 @@ import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
 import type { Card, Theme } from '../types';
 import { themeTinyLabels, themeColors, themeDisplayNames } from '../types';
+import { hasRemotePayment, recordPayment } from '../services/paymentTracking';
+
+function generateSessionCode(length = 6): string {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join('');
+}
 
 interface GameBoardProps {
   round: 1 | 2;
@@ -22,13 +30,11 @@ export function GameBoard({ round }: GameBoardProps) {
   const [showIntro, setShowIntro] = useState(true); // Show "whose turn" intro
   const [showPassDevice, setShowPassDevice] = useState(false);
   const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
-  const [copyToast, setCopyToast] = useState<string | null>(null);
   const [showQuestion, setShowQuestion] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
   const [revealedCard, setRevealedCard] = useState<Card | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const toastTimerRef = useRef<number | null>(null);
 
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
@@ -183,51 +189,39 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const isFirstPartner2Handoff = showPassDevice && state.currentPlayer === 2 && !hasShownPartner2Share;
 
-  const handleSendPartnerReminder = async () => {
-    const url = window.location.origin;
-    const text =
-      `Let’s play this together later: Reveal – the game for couples.\n\n` +
-      `Want to play tonight? If yes, open this on one phone when we’re together.`;
-
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: 'Reveal – Game for Couples',
-          text,
-          url
-        });
-        return;
+  const handleCreateRemoteSession = async () => {
+    // Preserve partner names and payment status before reset
+    const partner1Name = state.partner1Name;
+    const partner2Name = state.partner2Name;
+    const hasPaid = state.hasPaid;
+    
+    // Reset game progress (clears everything - no confirmation)
+    dispatch({ type: 'RESET_GAME' });
+    
+    // Set partner names again immediately after reset
+    dispatch({ type: 'SET_PARTNER_NAMES', partner1Name, partner2Name });
+    
+    // Check payment status
+    if (hasPaid) {
+      try {
+        await recordPayment({ checkoutId: localStorage.getItem('reveal-checkout-id') });
+      } catch {
+        // ignore
       }
-    } catch (err) {
-      // User cancelled share — don't show clipboard fallback error UI.
-      if (err && typeof err === 'object' && 'name' in err && (err as { name?: string }).name === 'AbortError') {
-        return;
-      }
-      // Otherwise fall through to clipboard fallback
     }
 
-    try {
-      await navigator.clipboard.writeText(`${text}\n\n${url}`);
-      alert('Reminder copied. Paste it into your favorite chat.');
-    } catch {
-      alert('Could not copy. Please copy this link manually: ' + url);
+    const ok = hasPaid ? true : await hasRemotePayment();
+    if (!ok) {
+      dispatch({ type: 'NAVIGATE_TO', screen: 'remotePayment' });
+      return;
     }
-  };
 
-  const handleCopyPartnerReminder = async () => {
-    const url = window.location.origin;
-    const text =
-      `Let’s play this together later: Reveal – the game for couples.\n\n` +
-      `Want to play tonight? If yes, open this on one phone when we’re together.\n\n` +
-      url;
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopyToast('Copied to clipboard');
-      if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
-      toastTimerRef.current = window.setTimeout(() => setCopyToast(null), 1500);
-    } catch {
-      alert('Could not copy. Please copy this link manually: ' + url);
-    }
+    // Create remote session
+    const code = generateSessionCode(6);
+    dispatch({ type: 'SELECT_MODE', mode: 'remote' });
+    dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 1 });
+    dispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
+    dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
   };
 
   // Get total card count for a theme in Round 1
@@ -554,37 +548,16 @@ export function GameBoard({ round }: GameBoardProps) {
           {isFirstPartner2Handoff && (
             <div style={{ marginTop: '32px', width: '100%', maxWidth: '420px' }}>
               <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'white', textAlign: 'center' }}>
-                Not together right now? Send this to your partner to play later.
+                Not together right now?<br />
+                Create a remote session to play together.
               </p>
               <button
-                className="btn btn--secondary btn--full"
-                onClick={handleSendPartnerReminder}
-                style={{ marginTop: 0 }}
+                className="btn btn--accent btn--full"
+                onClick={handleCreateRemoteSession}
+                style={{ marginTop: '12px' }}
               >
-                Send to partner to play later
+                Create Remote Session
               </button>
-              <button
-                type="button"
-                onClick={handleCopyPartnerReminder}
-                style={{
-                  marginTop: '8px',
-                  width: '100%',
-                  padding: 0,
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'white',
-                  fontSize: '0.85rem',
-                  textDecoration: 'underline',
-                  cursor: 'pointer'
-                }}
-              >
-                Copy link
-              </button>
-              {copyToast && (
-                <div style={{ marginTop: '6px', textAlign: 'center', fontSize: '0.8rem', color: 'white', opacity: 0.9 }}>
-                  {copyToast}
-                </div>
-              )}
             </div>
           )}
         </div>
