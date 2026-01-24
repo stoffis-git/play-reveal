@@ -57,6 +57,36 @@ export function RemoteSessionSetup() {
     }
   };
 
+  const handleSendInvite = async () => {
+    if (!shareUrl) return;
+    
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: 'Join me for Reveal',
+          text: `Join me for a game of Reveal! Use this link: ${shareUrl}`,
+          url: shareUrl
+        });
+        return;
+      }
+    } catch (err) {
+      // User cancelled or error - fall through to clipboard
+      if ((err as Error).name !== 'AbortError') {
+        // Only show error if it wasn't a cancellation
+        console.error('Share failed:', err);
+      }
+    }
+
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setError('Could not share link. Please copy it manually.');
+    }
+  };
+
   const handleCancelSession = () => {
     dispatch({ type: 'CANCEL_REMOTE_SESSION' });
   };
@@ -111,37 +141,85 @@ export function RemoteSessionSetup() {
               <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
                 SESSION CODE
               </div>
-              <div style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--partner1)', letterSpacing: '2px' }}>
+              <div style={{ 
+                fontSize: '2rem', 
+                fontWeight: 800, 
+                color: 'var(--partner1)', 
+                letterSpacing: '2px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '12px',
+                marginBottom: '16px'
+              }}>
                 {state.remoteSessionId}
+                {shareUrl && (
+                  <button
+                    onClick={handleCopyLink}
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                      padding: '4px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'var(--text-secondary)',
+                      transition: 'color 0.2s, transform 0.2s'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = 'var(--partner1)';
+                      e.currentTarget.style.transform = 'scale(1.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'var(--text-secondary)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }}
+                    title={copied ? 'Copied!' : 'Copy link'}
+                  >
+                    {copied ? (
+                      <span style={{ fontSize: '1.2rem' }}>✓</span>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                      </svg>
+                    )}
+                  </button>
+                )}
               </div>
 
               {shareUrl && (
-                <div style={{ marginTop: '10px', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                  Share this link with your partner:
-                  <div style={{
-                    marginTop: '6px',
-                    padding: '10px 12px',
-                    background: 'var(--bg-secondary)',
-                    borderRadius: '10px',
-                    wordBreak: 'break-all'
-                  }}>
-                    {shareUrl}
-                  </div>
-                </div>
+                <button 
+                  className="btn btn--accent btn--full" 
+                  onClick={handleSendInvite}
+                  style={{ marginTop: '8px' }}
+                >
+                  Send Invite Link
+                </button>
               )}
             </div>
 
-            {shareUrl && (
-              <button className="btn btn--secondary btn--full" style={{ maxWidth: '420px', margin: '0 auto 10px' }} onClick={handleCopyLink}>
-                {copied ? 'Copied!' : 'Copy invite link'}
-              </button>
-            )}
-
-            <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginTop: '10px' }}>
+            <div style={{ 
+              color: 'var(--text-secondary)', 
+              fontSize: '1.1rem', 
+              marginTop: '16px',
+              minHeight: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
               {state.isRemoteConnected ? (
                 <span style={{ color: 'var(--match-green)', fontWeight: 700 }}>Connected</span>
               ) : (
-                <span>Waiting for partner to join…</span>
+                <span 
+                  style={{ 
+                    animation: 'pulse 2s ease-in-out infinite',
+                    fontWeight: 500
+                  }}
+                >
+                  Waiting for {state.partner2Name || 'partner'} to join…
+                </span>
               )}
             </div>
 
@@ -159,9 +237,6 @@ export function RemoteSessionSetup() {
 
             {!isJoiner && (
               <>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '12px', maxWidth: '380px', margin: '12px auto 0' }}>
-                  You can explore the app while waiting. You'll be automatically pulled into Round 1 when {state.partner2Name || 'your partner'} joins.
-                </p>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '420px', margin: '20px auto 0' }}>
                   <button 
                     className="btn btn--secondary btn--full" 
@@ -170,9 +245,26 @@ export function RemoteSessionSetup() {
                   >
                     Look around, while waiting for {state.partner2Name || 'your partner'}
                   </button>
+                </div>
+                
+                <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--bg-secondary)' }}>
                   <button 
-                    className="btn btn--ghost" 
+                    className="btn btn--full" 
                     onClick={handleCancelSession}
+                    style={{ 
+                      maxWidth: '420px',
+                      margin: '0 auto',
+                      background: '#DC2626',
+                      color: 'white',
+                      border: 'none',
+                      fontWeight: '600'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#B91C1C';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = '#DC2626';
+                    }}
                   >
                     Cancel Session
                   </button>
