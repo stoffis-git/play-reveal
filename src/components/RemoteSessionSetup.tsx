@@ -111,7 +111,7 @@ export function RemoteSessionSetup() {
   };
 
   return (
-    <div className="container animate-slide-up" style={{ paddingBottom: '10px' }}>
+    <div className="container animate-slide-up" style={{ paddingBottom: state.remoteSessionId && !isJoiner ? '180px' : '10px' }}>
       <div className="game-header" style={{ marginBottom: '0px' }}>
         <Menu buttonPosition="inline" />
         <div style={{ flex: 1 }}></div>
@@ -247,51 +247,72 @@ export function RemoteSessionSetup() {
 
             {!isJoiner && (
               <>
-                <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--bg-secondary)' }}>
-                  <button 
-                    className="btn btn--ghost btn--full" 
-                    onClick={handleLookAround}
-                    style={{ 
-                      maxWidth: '420px',
-                      margin: '0 auto'
-                    }}
-                  >
-                    Back
-                  </button>
-                  <p style={{ 
-                    fontSize: '0.75rem', 
-                    color: 'var(--text-muted)', 
-                    textAlign: 'center',
-                    marginTop: '8px',
-                    maxWidth: '420px',
-                    margin: '8px auto 0'
-                  }}>
-                    Your invitation stays active
-                  </p>
-                </div>
-                
+                {/* Cancel Session button - moved below waiting message */}
                 <div style={{ marginTop: '32px' }}>
                   <button 
                     className="btn btn--full" 
                     onClick={handleCancelSession}
+                    disabled={!state.remoteSessionId}
                     style={{ 
                       maxWidth: '420px',
                       margin: '0 auto',
-                      background: '#DC2626',
-                      color: 'white',
-                      border: 'none',
-                      fontWeight: '600'
+                      background: 'white',
+                      color: state.remoteSessionId ? '#DC2626' : 'var(--text-muted)',
+                      border: '2px solid',
+                      borderColor: state.remoteSessionId ? '#DC2626' : 'var(--border-color)',
+                      fontWeight: '600',
+                      cursor: state.remoteSessionId ? 'pointer' : 'not-allowed',
+                      opacity: state.remoteSessionId ? 1 : 0.5
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.background = '#B91C1C';
+                      if (state.remoteSessionId) {
+                        e.currentTarget.style.background = '#FEE2E2';
+                      }
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.background = '#DC2626';
+                      e.currentTarget.style.background = 'white';
                     }}
                   >
                     Cancel Session
                   </button>
                 </div>
+                
+                {/* Back button - positioned at bottom */}
+                <div style={{ 
+                  position: 'fixed',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  padding: '20px',
+                  paddingBottom: '80px',
+                  background: 'linear-gradient(to top, var(--bg-primary) 80%, transparent)',
+                  display: 'flex',
+                  justifyContent: 'center'
+                }}>
+                  <button 
+                    className="btn btn--full" 
+                    onClick={handleLookAround}
+                    style={{ 
+                      maxWidth: '420px',
+                      background: 'white',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--border-color)',
+                      boxShadow: 'var(--card-shadow)'
+                    }}
+                  >
+                    Back
+                  </button>
+                </div>
+                <p style={{ 
+                  fontSize: '0.75rem', 
+                  color: 'var(--text-muted)', 
+                  textAlign: 'center',
+                  marginTop: '8px',
+                  maxWidth: '420px',
+                  margin: '8px auto 0'
+                }}>
+                  Your invitation stays active
+                </p>
               </>
             )}
           </>
