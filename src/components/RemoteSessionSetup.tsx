@@ -14,6 +14,7 @@ export function RemoteSessionSetup() {
   const { state, dispatch } = useGame();
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [hasShared, setHasShared] = useState(false); // Track if link was copied or sent
 
   const isJoiner = state.remotePlayerId === 2;
 
@@ -51,6 +52,7 @@ export function RemoteSessionSetup() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      setHasShared(true); // Mark as shared
       window.setTimeout(() => setCopied(false), 1200);
     } catch {
       setError('Could not copy link. Please copy it manually.');
@@ -67,6 +69,7 @@ export function RemoteSessionSetup() {
           text: `Join me for a game of Reveal! Use this link: ${shareUrl}`,
           url: shareUrl
         });
+        setHasShared(true); // Mark as shared
         return;
       }
     } catch (err) {
@@ -74,6 +77,9 @@ export function RemoteSessionSetup() {
       if ((err as Error).name !== 'AbortError') {
         // Only show error if it wasn't a cancellation
         console.error('Share failed:', err);
+      } else {
+        // User cancelled, don't mark as shared
+        return;
       }
     }
 
@@ -81,6 +87,7 @@ export function RemoteSessionSetup() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       setCopied(true);
+      setHasShared(true); // Mark as shared
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setError('Could not share link. Please copy it manually.');
@@ -200,28 +207,31 @@ export function RemoteSessionSetup() {
               )}
             </div>
 
-            <div style={{ 
-              color: 'var(--text-secondary)', 
-              fontSize: '1.1rem', 
-              marginTop: '16px',
-              minHeight: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              {state.isRemoteConnected ? (
-                <span style={{ color: 'var(--match-green)', fontWeight: 700 }}>Connected</span>
-              ) : (
-                <span 
-                  style={{ 
-                    animation: 'pulse 2s ease-in-out infinite',
-                    fontWeight: 500
-                  }}
-                >
-                  Waiting for {state.partner2Name || 'partner'} to join…
-                </span>
-              )}
-            </div>
+            {/* Only show waiting message after link is copied or sent */}
+            {hasShared && (
+              <div style={{ 
+                color: 'var(--text-secondary)', 
+                fontSize: '1.1rem', 
+                marginTop: '16px',
+                minHeight: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                {state.isRemoteConnected ? (
+                  <span style={{ color: 'var(--match-green)', fontWeight: 700 }}>Connected</span>
+                ) : (
+                  <span 
+                    style={{ 
+                      animation: 'pulse 2s ease-in-out infinite',
+                      fontWeight: 500
+                    }}
+                  >
+                    Waiting for {state.partner2Name || 'partner'} to join…
+                  </span>
+                )}
+              </div>
+            )}
 
             {/* Joiners are taken here via /play/{code}. Hosts just wait; game will start automatically when partner joins. */}
             {isJoiner && (
@@ -237,17 +247,30 @@ export function RemoteSessionSetup() {
 
             {!isJoiner && (
               <>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '20px', maxWidth: '420px', margin: '20px auto 0' }}>
+                <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--bg-secondary)' }}>
                   <button 
-                    className="btn btn--secondary btn--full" 
+                    className="btn btn--ghost btn--full" 
                     onClick={handleLookAround}
-                    style={{ whiteSpace: 'normal', wordBreak: 'break-word' }}
+                    style={{ 
+                      maxWidth: '420px',
+                      margin: '0 auto'
+                    }}
                   >
-                    Look around, while waiting for {state.partner2Name || 'your partner'}
+                    Back
                   </button>
+                  <p style={{ 
+                    fontSize: '0.75rem', 
+                    color: 'var(--text-muted)', 
+                    textAlign: 'center',
+                    marginTop: '8px',
+                    maxWidth: '420px',
+                    margin: '8px auto 0'
+                  }}>
+                    Your invitation stays active
+                  </p>
                 </div>
                 
-                <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--bg-secondary)' }}>
+                <div style={{ marginTop: '32px' }}>
                   <button 
                     className="btn btn--full" 
                     onClick={handleCancelSession}
