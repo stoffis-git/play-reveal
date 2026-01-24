@@ -36,35 +36,77 @@ export function RemotePaymentScreen() {
       </div>
 
       <div style={{ textAlign: 'center', marginTop: '16px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📱✨</div>
-        <h2 style={{ marginBottom: '8px' }}>Play Remotely</h2>
+        <div style={{ fontSize: '3rem', marginBottom: '12px' }}>✨</div>
+        <h2 style={{ marginBottom: '8px' }}>Unlock Premium</h2>
         <p style={{ color: 'var(--text-secondary)', maxWidth: '380px', margin: '0 auto 24px' }}>
-          Unlock premium to play live with your partner on separate devices, and continue straight to Round 2 after Round 1.
+          Get the complete Reveal experience with remote play, deeper insights, and full conversation starters.
         </p>
 
         <div style={{
           background: 'linear-gradient(135deg, var(--partner1-light) 0%, var(--partner2-light) 100%)',
           borderRadius: '16px',
-          padding: '20px',
+          padding: '24px',
           maxWidth: '420px',
           margin: '0 auto 20px',
           boxShadow: 'var(--card-shadow)',
           border: '2px solid var(--partner1)'
         }}>
-          <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', color: 'var(--text-secondary)', marginBottom: '10px' }}>
-            PREMIUM UNLOCK
+          <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+            <h3 style={{ 
+              fontSize: '1.25rem',
+              fontWeight: '700',
+              marginBottom: '4px',
+              background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent'
+            }}>
+              Premium Includes
+            </h3>
           </div>
-          <div style={{
-            fontSize: '2rem',
-            fontWeight: 700,
-            background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent'
+
+          <div style={{ 
+            background: 'white',
+            borderRadius: '12px',
+            padding: '16px',
+            marginBottom: '16px'
           }}>
-            $4.99
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
+              {[
+                { icon: '📱', text: 'Remote play mode — connect live on separate devices' },
+                { icon: '🎴', text: 'Round 2 with 15 tailored questions' },
+                { icon: '📊', text: 'Complete relationship insights & analysis' }, 
+                { icon: '💬', text: 'Full conversation starters with deep dives' },
+              ].map((item, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
+                  <span style={{ textAlign: 'left' }}>{item.text}</span>
+                </div>
+              ))}
+            </div>
           </div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-            One-time payment • No subscription
+
+          <div style={{ 
+            background: 'white',
+            borderRadius: '12px',
+            padding: '16px'
+          }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '1px', color: 'var(--text-secondary)', marginBottom: '8px', textAlign: 'center' }}>
+              PREMIUM UNLOCK
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: 700,
+              textAlign: 'center',
+              background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              marginBottom: '4px'
+            }}>
+              $4.99
+            </div>
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textAlign: 'center' }}>
+              One-time payment • No subscription
+            </div>
           </div>
         </div>
 

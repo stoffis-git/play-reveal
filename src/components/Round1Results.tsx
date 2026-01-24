@@ -329,14 +329,15 @@ export function Round1Results() {
             padding: '16px',
             marginBottom: '16px'
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '0.85rem' }}>
               {[
-                { icon: '🎴', text: '+ 15 questions based on your round 1.' },
-                { icon: '📊', text: 'Complete relationship insights.' }, 
-                { icon: '💬', text: 'Full conversation starters with deep dives.' },
+                { icon: '📱', text: 'Remote play mode — connect live on separate devices' },
+                { icon: '🎴', text: '+ 15 questions based on your round 1' },
+                { icon: '📊', text: 'Complete relationship insights' }, 
+                { icon: '💬', text: 'Full conversation starters with deep dives' },
               ].map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <span>{item.icon}</span>
+                  <span style={{ fontSize: '1.2rem' }}>{item.icon}</span>
                   <span>{item.text}</span>
                 </div>
               ))}
