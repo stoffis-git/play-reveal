@@ -27,6 +27,15 @@
   <body>
     <div id="root"></div>
     <script>
+      // Handle GitHub Pages SPA redirect from 404.html
+      (function() {
+        const redirect = sessionStorage.getItem('redirect');
+        if (redirect) {
+          sessionStorage.removeItem('redirect');
+          window.history.replaceState(null, '', redirect);
+        }
+      })();
+      
       // Prevent zoom on page load and touch events
       (function() {
         // Reset viewport scale on load
