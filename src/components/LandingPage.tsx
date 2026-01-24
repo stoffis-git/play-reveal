@@ -220,7 +220,7 @@ export function LandingPage() {
             Discover how in-sync you really are
           </p>
           <p style={{ fontSize: '1rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '8px auto 0' }}>
-            A fun and insightful memory card-style game for couples & relationships..
+            A fun and insightful memory card-style game for couples & relationships.
           </p>
         </div>
 
