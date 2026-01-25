@@ -20,10 +20,7 @@ export class SupabaseSync {
     let supabase;
     try {
       supabase = getSupabaseClient();
-    } catch (error) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseSync.ts:23',message:'Supabase client creation failed',data:{error:error instanceof Error?error.message:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
+    } catch {
       params.onStatus?.('error');
       return;
     }
@@ -59,9 +56,6 @@ export class SupabaseSync {
 
     await new Promise<void>((resolve) => {
       channel.subscribe((status) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'supabaseSync.ts:75',message:'Channel subscription status',data:{status:status,sessionId:params.sessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
         if (status === 'SUBSCRIBED') {
           params.onStatus?.('connected');
           resolve();

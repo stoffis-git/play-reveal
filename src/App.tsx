@@ -11,15 +11,9 @@ function GameRouter() {
     // Wait a tick to ensure path restoration from 404.html has completed
     const checkPath = () => {
       const path = window.location.pathname;
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:13',message:'Checking invite path',data:{path:path,hasRedirect:!!sessionStorage.getItem('redirect')},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
       const match = path.match(/^\/play\/([A-Za-z0-9]{4,12})\/?$/);
       if (!match) return;
       const code = match[1].toUpperCase();
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:18',message:'Invite path matched, dispatching',data:{code:code},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H4'})}).catch(()=>{});
-      // #endregion
 
       dispatch({ type: 'SELECT_MODE', mode: 'remote' });
       dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
@@ -135,9 +129,6 @@ function GameRouter() {
 }
 
 function App() {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:121',message:'App component rendering',data:{pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3,H5'})}).catch(()=>{});
-  // #endregion
   return (
     <GameProvider>
       <RemoteSessionOverlay />
