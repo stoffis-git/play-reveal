@@ -15,10 +15,22 @@ function GameRouter() {
       if (!match) return;
       const code = match[1].toUpperCase();
 
-      // Only process URL routing if we're NOT already Player 1 in a remote session
+      // CRITICAL: Only process URL routing if we're NOT already Player 1
       // This prevents Player 1 from seeing the invite screen when Player 2 joins
-      if (state.gameMode === 'remote' && state.remotePlayerId === 1) {
-        return; // Player 1 is already in a session, ignore URL routing
+      // Even if Player 1 has the same URL open, they should NOT process it
+      if (state.remotePlayerId === 1) {
+        return; // Player 1 should NEVER process invite URLs - they're the host!
+      }
+
+      // Also check: if we're already Player 2 with a different session, don't process
+      // (This handles edge cases where Player 2 might have multiple tabs)
+      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId !== code) {
+        return; // Already Player 2 in a different session
+      }
+
+      // Only process if we're not already Player 2 with this exact session
+      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId === code) {
+        return; // Already set up as Player 2 for this session
       }
 
       dispatch({ type: 'SELECT_MODE', mode: 'remote' });
@@ -30,7 +42,7 @@ function GameRouter() {
     checkPath();
     const timeout = setTimeout(checkPath, 100);
     return () => clearTimeout(timeout);
-  }, [dispatch, state.gameMode, state.remotePlayerId]);
+  }, [dispatch, state.gameMode, state.remotePlayerId, state.remoteSessionId]);
 
   // Prevent zoom on screen changes - reset viewport scale
   useEffect(() => {
@@ -98,9 +110,9 @@ function GameRouter() {
       if (purpose === 'remote') {
         dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
       } else {
-        // Always show PaymentSuccess screen so users can see the confirmation
-        // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
-        dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+      // Always show PaymentSuccess screen so users can see the confirmation
+      // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
+      dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
       }
     }
   }, [dispatch, state.round1Complete]);

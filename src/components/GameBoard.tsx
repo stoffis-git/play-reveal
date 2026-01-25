@@ -203,11 +203,11 @@ export function GameBoard({ round }: GameBoardProps) {
     
     // Check payment status
     if (hasPaid) {
-      try {
+    try {
         await recordPayment({ checkoutId: localStorage.getItem('reveal-checkout-id') });
-      } catch {
+    } catch {
         // ignore
-      }
+    }
     }
 
     const ok = hasPaid ? true : await hasRemotePayment();

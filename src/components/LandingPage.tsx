@@ -234,15 +234,15 @@ export function LandingPage() {
           )}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ position: 'relative' }}>
-              <button
-                className="btn btn--primary btn--full"
-                onClick={handleStart}
-                disabled={!hasProgress && !isValid}
-              >
+          <button
+            className="btn btn--primary btn--full"
+            onClick={handleStart}
+            disabled={!hasProgress && !isValid}
+          >
                 {hasProgress ? '→ Continue Playing' : 'Play in Person'}
-              </button>
+          </button>
             </div>
-            {!hasProgress && (
+          {!hasProgress && (
               <div style={{ position: 'relative' }}>
                 <button
                   className="btn btn--accent btn--full"
@@ -263,11 +263,11 @@ export function LandingPage() {
                   borderRadius: '10px',
                   letterSpacing: '0.5px',
                   boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                }}>
+            }}>
                   PREMIUM
                 </span>
               </div>
-            )}
+          )}
           </div>
         </div>
 
