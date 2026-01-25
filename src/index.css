@@ -468,6 +468,16 @@ h3 {
   transform: none;
 }
 
+.game-card--spectator {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.game-card--spectator:hover {
+  transform: none;
+}
+
 .game-card--animating-out {
   opacity: 0;
   transform: scale(0.8);
@@ -782,6 +792,31 @@ h3 {
   margin-top: 24px;
   font-size: 0.875rem;
   color: var(--text-muted);
+}
+
+.question-modal--spectator .question-modal__option {
+  cursor: default;
+  pointer-events: none;
+}
+
+.question-modal--spectator .question-modal__option:disabled {
+  opacity: 0.7;
+}
+
+.question-modal__option--selected {
+  border: 3px solid currentColor !important;
+  box-shadow: 0 0 0 2px rgba(139, 123, 168, 0.2);
+  transform: scale(1.02);
+}
+
+.question-modal__option--selected.question-modal__option--player1 {
+  border-color: var(--partner1) !important;
+  box-shadow: 0 0 0 2px rgba(255, 138, 108, 0.3);
+}
+
+.question-modal__option--selected.question-modal__option--player2 {
+  border-color: var(--partner2) !important;
+  box-shadow: 0 0 0 2px rgba(178, 132, 224, 0.3);
 }
 
 /* Intro Screen - Who's Turn */
@@ -1692,6 +1727,18 @@ h3 {
 
 .reveal-screen__btn {
   margin-top: 4px;
+}
+
+.reveal-screen--waiting {
+  margin-top: 24px;
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  text-align: center;
+}
+
+.reveal-screen__waiting {
+  margin-top: 24px;
 }
 
 /* Utility */

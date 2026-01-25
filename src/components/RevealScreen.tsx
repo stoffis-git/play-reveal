@@ -8,9 +8,12 @@ interface RevealScreenProps {
   partner1Name: string;
   partner2Name: string;
   onContinue: () => void;
+  isRemote?: boolean;
+  isMyTurn?: boolean;
+  nextPlayerName?: string;
 }
 
-export function RevealScreen({ card, partner1Name, partner2Name, onContinue }: RevealScreenProps) {
+export function RevealScreen({ card, partner1Name, partner2Name, onContinue, isRemote = false, isMyTurn = true, nextPlayerName = '' }: RevealScreenProps) {
   const [showDeepDive, setShowDeepDive] = useState(false);
   const question = getQuestionById(card.questionId);
   if (!question) return null;
@@ -117,9 +120,17 @@ export function RevealScreen({ card, partner1Name, partner2Name, onContinue }: R
           </>
         )}
 
-        <button className="btn btn--primary btn--full reveal-screen__btn" onClick={onContinue}>
-          Continue
-        </button>
+        {isRemote && !isMyTurn ? (
+          <div className="reveal-screen__waiting reveal-screen--waiting">
+            <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
+              Waiting for {nextPlayerName} to continue...
+            </p>
+          </div>
+        ) : (
+          <button className="btn btn--primary btn--full reveal-screen__btn" onClick={onContinue}>
+            Continue
+          </button>
+        )}
       </div>
     </div>
   );

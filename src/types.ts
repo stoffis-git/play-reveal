@@ -70,6 +70,7 @@ export interface GameState {
   remotePlayerId: 1 | 2 | null;
   isRemoteConnected: boolean;
   remoteSessionPaid: boolean;
+  selectedAnswer: 'A' | 'B' | null;
 }
 
 export interface ThemeSummary {

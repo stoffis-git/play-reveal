@@ -68,7 +68,8 @@ type GameAction =
   | { type: 'CANCEL_REMOTE_SESSION' }
   | { type: 'ACCEPT_REMOTE_INVITE' }
   | { type: 'DECLINE_REMOTE_INVITE' }
-  | { type: 'RESET_GAME' };
+  | { type: 'RESET_GAME' }
+  | { type: 'SELECT_ANSWER'; answer: 'A' | 'B'; cardIndex: number };
 
 function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
   const questions = round === 1 ? round1Questions : selectRound2Questions(round1Answers || []);
@@ -106,7 +107,8 @@ const initialState: GameState = {
   remoteSessionId: storedRemoteSession.sessionId,
   remotePlayerId: storedRemoteSession.playerId,
   isRemoteConnected: false,
-  remoteSessionPaid: false
+  remoteSessionPaid: false,
+  selectedAnswer: null
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -146,7 +148,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         round1Cards: createInitialCards(1),
         round1Complete: false,
         round2Complete: false,
-        selectedCardIndex: null
+        selectedCardIndex: null,
+        selectedAnswer: null
       };
 
     case 'CONTINUE_GAME':
@@ -165,7 +168,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (action.index < 0) {
         return {
           ...state,
-          selectedCardIndex: null
+          selectedCardIndex: null,
+          selectedAnswer: null
         };
       }
       
@@ -183,8 +187,19 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       
       return {
         ...state,
-        selectedCardIndex: action.index
+        selectedCardIndex: action.index,
+        selectedAnswer: null
       };
+
+    case 'SELECT_ANSWER':
+      // Set selected answer for highlighting (only if card index matches)
+      if (state.selectedCardIndex === action.cardIndex) {
+        return {
+          ...state,
+          selectedAnswer: action.answer
+        };
+      }
+      return state;
 
     case 'ANSWER_QUESTION': {
       if (state.selectedCardIndex === null) return state;
@@ -216,7 +231,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           [isRound1 ? 'round1Cards' : 'round2Cards']: cards,
           currentPlayer: 2,
-          selectedCardIndex: null
+          selectedCardIndex: null,
+          selectedAnswer: null
         };
       } else {
         answer.partner2Answer = action.answer;
@@ -239,7 +255,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           [isRound1 ? 'round1Cards' : 'round2Cards']: cards,
           currentPlayer: 1,
-          selectedCardIndex: null
+          selectedCardIndex: null,
+          selectedAnswer: null
         };
       }
     }
@@ -279,7 +296,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentScreen: 'round2',
         round2Cards: createInitialCards(2, round1Answers),
         currentPlayer: 1,
-        selectedCardIndex: null
+        selectedCardIndex: null,
+        selectedAnswer: null
       };
     }
 
@@ -297,7 +315,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           round1Complete: false,
           round2Complete: false,
           currentPlayer: 1,
-          selectedCardIndex: null
+          selectedCardIndex: null,
+          selectedAnswer: null
         };
       } else {
         // Replay Round 2 - regenerate based on current Round 1 answers
@@ -308,7 +327,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           round2Cards: createInitialCards(2, round1Answers),
           round2Complete: false,
           currentPlayer: 1,
-          selectedCardIndex: null
+          selectedCardIndex: null,
+          selectedAnswer: null
         };
       }
     }
@@ -456,6 +476,16 @@ export function getQuestionForCard(card: Card) {
   return getQuestionById(card.questionId);
 }
 
+export function isActivePlayer(state: GameState): boolean {
+  if (state.gameMode !== 'remote' || !state.remotePlayerId) return true;
+  return state.currentPlayer === state.remotePlayerId;
+}
+
+export function isSpectatorMode(state: GameState): boolean {
+  if (state.gameMode !== 'remote' || !state.remotePlayerId) return false;
+  return state.currentPlayer !== state.remotePlayerId;
+}
+
 // Context
 interface GameContextType {
   state: GameState;
@@ -518,6 +548,7 @@ function persistState(state: GameState) {
         round2Complete: state.round2Complete,
         hasPaid: state.hasPaid,
         selectedCardIndex: state.selectedCardIndex,
+        selectedAnswer: state.selectedAnswer,
 
         gameMode: state.gameMode,
         remoteSessionId: state.remoteSessionId,
@@ -594,6 +625,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     round1Complete: s.round1Complete,
     round2Complete: s.round2Complete,
     selectedCardIndex: s.selectedCardIndex,
+    selectedAnswer: s.selectedAnswer,
     gameMode: 'remote',
     remoteSessionPaid: true
     // Intentionally do NOT include hasPaid or remotePlayerId (local-only)
@@ -611,6 +643,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     switch (action.type) {
       case 'SELECT_CARD':
+      case 'SELECT_ANSWER':
       case 'ANSWER_QUESTION':
       case 'COMPLETE_ROUND':
       case 'NAVIGATE_TO':

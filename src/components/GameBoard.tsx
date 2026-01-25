@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useGame, getMatchCount, getThemeSummaries } from '../store';
+import { useGame, getMatchCount, getThemeSummaries, isActivePlayer, isSpectatorMode } from '../store';
 import { getQuestionWithExample, getRound2Intro, round1Questions } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
@@ -39,57 +39,90 @@ export function GameBoard({ round }: GameBoardProps) {
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
   const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
+  const activePlayer = isActivePlayer(state);
+  const spectatorMode = isSpectatorMode(state);
   const matchCount = getMatchCount(cards);
   const revealedCount = cards.filter(c => c.state === 'revealed').length;
 
   // When card is selected, start animation
   useEffect(() => {
-    if (state.selectedCardIndex !== null && cardPosition) {
-      setIsAnimating(true);
-      // After animation completes, show the question
-      const timer = setTimeout(() => {
+    if (state.selectedCardIndex !== null) {
+      // Get card position if this is the active player who clicked
+      if (cardPosition) {
+        setIsAnimating(true);
+        // After animation completes, show the question
+        const timer = setTimeout(() => {
+          setShowQuestion(true);
+          setIsAnimating(false);
+        }, 400);
+        return () => clearTimeout(timer);
+      } else if (isRemote && spectatorMode) {
+        // For spectator, show question immediately without animation
         setShowQuestion(true);
         setIsAnimating(false);
-      }, 400);
-      return () => clearTimeout(timer);
+      }
+    } else {
+      // Card deselected, hide question
+      setShowQuestion(false);
+      setIsAnimating(false);
     }
-  }, [state.selectedCardIndex, cardPosition]);
+  }, [state.selectedCardIndex, cardPosition, isRemote, spectatorMode]);
+
+  // Close question modal when selectedAnswer is cleared (after ANSWER_QUESTION is processed)
+  useEffect(() => {
+    if (isRemote && spectatorMode && state.selectedCardIndex === null && state.selectedAnswer === null) {
+      setShowQuestion(false);
+    }
+  }, [state.selectedCardIndex, state.selectedAnswer, isRemote, spectatorMode]);
 
   // Handle answer selection
   const handleAnswer = (answer: 'A' | 'B') => {
-    setShowQuestion(false);
-    setCardPosition(null);
+    if (!activePlayer) return; // Only active player can answer
+    
+    const cardIndex = state.selectedCardIndex;
+    if (cardIndex === null) return;
 
-    // Check if this will reveal the card (both partners will have answered)
-    const selectedCard = state.selectedCardIndex !== null ? cards[state.selectedCardIndex] : null;
-    const willReveal = selectedCard && (
-      (state.currentPlayer === 1 && selectedCard.state === 'partner2Only') ||
-      (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
-    );
+    // Immediately broadcast SELECT_ANSWER for highlighting
+    if (isRemote) {
+      dispatch({ type: 'SELECT_ANSWER', answer, cardIndex });
+    }
 
-    // Delay to show card flip animation
+    // Delay before closing question modal and processing answer
     setTimeout(() => {
-      if (willReveal && selectedCard) {
-        // Create a copy of the card with the answer for the reveal screen
-        const cardWithAnswer: Card = {
-          ...selectedCard,
-          state: 'revealed',
-          answer: {
-            ...selectedCard.answer,
-            ...(state.currentPlayer === 1 
-              ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
-              : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
-            )
-          }
-        };
-        setRevealedCard(cardWithAnswer);
-      }
-      dispatch({ type: 'ANSWER_QUESTION', answer });
-      // Only show pass device if not showing reveal screen
-      if (!willReveal) {
-        setShowPassDevice(true);
-      }
-    }, 300);
+      setShowQuestion(false);
+      setCardPosition(null);
+
+      // Check if this will reveal the card (both partners will have answered)
+      const selectedCard = cards[cardIndex];
+      const willReveal = selectedCard && (
+        (state.currentPlayer === 1 && selectedCard.state === 'partner2Only') ||
+        (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
+      );
+
+      // Delay to show card flip animation
+      setTimeout(() => {
+        if (willReveal && selectedCard) {
+          // Create a copy of the card with the answer for the reveal screen
+          const cardWithAnswer: Card = {
+            ...selectedCard,
+            state: 'revealed',
+            answer: {
+              ...selectedCard.answer,
+              ...(state.currentPlayer === 1 
+                ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
+                : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
+              )
+            }
+          };
+          setRevealedCard(cardWithAnswer);
+        }
+        dispatch({ type: 'ANSWER_QUESTION', answer });
+        // Only show pass device if not showing reveal screen and not remote
+        if (!willReveal && !isRemote) {
+          setShowPassDevice(true);
+        }
+      }, 300);
+    }, 500); // 0.5 second delay
   };
 
   // Handle continue from reveal screen
@@ -107,6 +140,9 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const handleCardClick = (index: number) => {
     if (isRemote && !state.isRemoteConnected) return;
+    // In remote mode, only allow clicks if this player is the active player
+    if (isRemote && !activePlayer) return;
+    
     const card = cards[index];
     const cardEl = cardRefs.current[index];
     
@@ -149,6 +185,11 @@ export function GameBoard({ round }: GameBoardProps) {
     } else if (card.state === 'revealed') {
       className += card.answer.matched ? ' game-card--matched' : ' game-card--different';
       className += ' game-card--disabled';
+    }
+    
+    // Add spectator class in remote mode when not active player
+    if (isRemote && spectatorMode) {
+      className += ' game-card--spectator';
     }
     
     if (isAnimating && state.selectedCardIndex === index) {
@@ -267,7 +308,7 @@ export function GameBoard({ round }: GameBoardProps) {
   return (
     <div className="game-container">
       {/* Intro screen - whose turn is it */}
-      {showIntro && (
+      {showIntro && !isRemote && (
         <div className={`intro-screen intro-screen--partner${state.currentPlayer}`}>
           <div className="intro-screen__content">
             <div className="intro-screen__round">
@@ -460,7 +501,7 @@ export function GameBoard({ round }: GameBoardProps) {
       {/* Question modal - no closing by clicking outside, must answer */}
       {showQuestion && selectedQuestion && selectedCard && (
         <div className="question-overlay">
-          <div className={`question-modal question-modal--player${state.currentPlayer} animate-modal-in`}>
+          <div className={`question-modal question-modal--player${state.currentPlayer} ${spectatorMode ? 'question-modal--spectator' : ''} animate-modal-in`}>
             {/* Round 2 intro explaining why this question */}
             {round === 2 && (
               <div className="question-modal__intro" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
@@ -497,25 +538,34 @@ export function GameBoard({ round }: GameBoardProps) {
                 {selectedQuestion.example}
               </p>
             )}
+            {spectatorMode && (
+              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
+                {currentPlayerName} is answering...
+              </p>
+            )}
             <div className="question-modal__options">
               <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
+                className={`question-modal__option question-modal__option--player${state.currentPlayer} ${state.selectedAnswer === 'A' ? 'question-modal__option--selected' : ''}`}
                 onClick={() => handleAnswer('A')}
+                disabled={spectatorMode}
               >
                 <span className="question-modal__option-letter">A</span>
                 <span className="question-modal__option-text">{selectedQuestion.optionA}</span>
               </button>
               <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
+                className={`question-modal__option question-modal__option--player${state.currentPlayer} ${state.selectedAnswer === 'B' ? 'question-modal__option--selected' : ''}`}
                 onClick={() => handleAnswer('B')}
+                disabled={spectatorMode}
               >
                 <span className="question-modal__option-letter">B</span>
                 <span className="question-modal__option-text">{selectedQuestion.optionB}</span>
               </button>
             </div>
-            <p className="question-modal__hint">
-              {currentPlayerName}, tap your answer
-            </p>
+            {!spectatorMode && (
+              <p className="question-modal__hint">
+                {currentPlayerName}, tap your answer
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -527,11 +577,14 @@ export function GameBoard({ round }: GameBoardProps) {
           partner1Name={state.partner1Name}
           partner2Name={state.partner2Name}
           onContinue={handleRevealContinue}
+          isRemote={isRemote}
+          isMyTurn={isRemote ? (state.currentPlayer === state.remotePlayerId) : true}
+          nextPlayerName={state.currentPlayer === 1 ? state.partner2Name : state.partner1Name}
         />
       )}
 
       {/* Pass device screen */}
-      {showPassDevice && (
+      {showPassDevice && !isRemote && (
         <div className={`pass-device pass-device--partner${state.currentPlayer}`}>
           <div className="pass-device__icon">📱</div>
           <h2 className="pass-device__text">Pass to</h2>
