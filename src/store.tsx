@@ -670,6 +670,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Reset presence tracking when session changes
+    presenceAnnouncedRef.current = {};
+
     if (!syncRef.current) syncRef.current = new SupabaseSync();
 
     void syncRef.current.connect({
@@ -736,21 +739,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
     });
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
 
-    // Announce presence - but ONLY if Player 2 has explicitly accepted
+  // Announce presence - but ONLY if Player 2 has explicitly accepted
+  // Separate effect that re-runs when currentScreen changes
+  useEffect(() => {
+    const sessionId = state.remoteSessionId;
+    if (state.gameMode !== 'remote' || !sessionId) {
+      return;
+    }
+
     const playerId = state.remotePlayerId;
     const shouldAnnouncePresence = playerId === 1 || 
       (playerId === 2 && state.currentScreen !== 'inviteAcceptance');
 
-    if (playerId && shouldAnnouncePresence && sessionId) {
+    if (playerId && shouldAnnouncePresence) {
       const key = `${sessionId}-${playerId}`;
       // Only send if not already announced this session
       if (!presenceAnnouncedRef.current[key]) {
         presenceAnnouncedRef.current[key] = true;
-        void syncRef.current.sendPresence(playerId);
+        void syncRef.current?.sendPresence(playerId);
       }
     }
-  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen]);
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
