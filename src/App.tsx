@@ -15,6 +15,12 @@ function GameRouter() {
       if (!match) return;
       const code = match[1].toUpperCase();
 
+      // Only process URL routing if we're NOT already Player 1 in a remote session
+      // This prevents Player 1 from seeing the invite screen when Player 2 joins
+      if (state.gameMode === 'remote' && state.remotePlayerId === 1) {
+        return; // Player 1 is already in a session, ignore URL routing
+      }
+
       dispatch({ type: 'SELECT_MODE', mode: 'remote' });
       dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
       dispatch({ type: 'NAVIGATE_TO', screen: 'inviteAcceptance' });
@@ -24,7 +30,7 @@ function GameRouter() {
     checkPath();
     const timeout = setTimeout(checkPath, 100);
     return () => clearTimeout(timeout);
-  }, [dispatch]);
+  }, [dispatch, state.gameMode, state.remotePlayerId]);
 
   // Prevent zoom on screen changes - reset viewport scale
   useEffect(() => {
