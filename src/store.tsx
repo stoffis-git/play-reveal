@@ -600,6 +600,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
   });
 
   const shouldBroadcast = (action: GameAction): boolean => {
+    // Don't broadcast player-specific navigation actions
+    if (action.type === 'NAVIGATE_TO') {
+      // These screens are player-specific and should NOT be broadcast
+      const playerSpecificScreens: GameScreen[] = ['inviteAcceptance', 'sessionCancelled', 'remoteSetup'];
+      if (playerSpecificScreens.includes(action.screen)) {
+        return false;
+      }
+    }
+    
     switch (action.type) {
       case 'SELECT_CARD':
       case 'ANSWER_QUESTION':
@@ -647,20 +656,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
         
         // Send presence after state update and connection is ready
         if (shouldSendPresence) {
-          setTimeout(() => {
+          // Try to send presence with retries
+          const trySendPresence = (attempt = 0) => {
             const updatedState = stateRef.current;
-            if (updatedState.isRemoteConnected && syncRef.current) {
+            if (syncRef.current) {
+              // Try to send even if not connected - Supabase will queue it
               void syncRef.current.sendPresence(2);
-            } else {
-              // If not connected yet, wait a bit more and try again
-              setTimeout(() => {
-                const retryState = stateRef.current;
-                if (retryState.isRemoteConnected && syncRef.current) {
-                  void syncRef.current.sendPresence(2);
-                }
-              }, 200);
+              // If connected, we're done. If not, retry after a delay
+              if (!updatedState.isRemoteConnected && attempt < 3) {
+                setTimeout(() => trySendPresence(attempt + 1), 200);
+              }
+            } else if (attempt < 3) {
+              // syncRef not initialized yet, retry
+              setTimeout(() => trySendPresence(attempt + 1), 200);
             }
-          }, 100);
+          };
+          
+          // Start trying after a brief delay to ensure state is updated
+          setTimeout(() => trySendPresence(), 50);
         }
         
         // Don't continue with normal dispatch flow (action already dispatched above)
