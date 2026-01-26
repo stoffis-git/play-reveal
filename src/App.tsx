@@ -121,9 +121,6 @@ function GameRouter() {
 }
 
 function App() {
-  // #region agent log
-  fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:121',message:'App component rendering',data:{pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3,H5'})}).catch(()=>{});
-  // #endregion
   return (
     <GameProvider>
       <RemoteSessionOverlay />
