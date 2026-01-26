@@ -137,75 +137,78 @@ export function RemoteSessionSetup() {
 
         {state.remoteSessionId && (
           <>
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '18px',
-              maxWidth: '420px',
-              margin: '0 auto 16px',
-              boxShadow: 'var(--card-shadow)'
-            }}>
-              <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                SESSION CODE
-              </div>
-              <div style={{ 
-                fontSize: '2rem', 
-                fontWeight: 800, 
-                color: 'var(--partner1)', 
-                letterSpacing: '2px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                marginBottom: '16px'
+            {/* Only show session code and invite button for hosts (Player 1), not joiners */}
+            {!isJoiner && (
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '18px',
+                maxWidth: '420px',
+                margin: '0 auto 16px',
+                boxShadow: 'var(--card-shadow)'
               }}>
-                {state.remoteSessionId}
+                <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  SESSION CODE
+                </div>
+                <div style={{
+                  fontSize: '2rem',
+                  fontWeight: 800,
+                  color: 'var(--partner1)',
+                  letterSpacing: '2px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '12px',
+                  marginBottom: '16px'
+                }}>
+                  {state.remoteSessionId}
+                  {shareUrl && (
+                    <button
+                      onClick={handleCopyLink}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-secondary)',
+                        transition: 'color 0.2s, transform 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--partner1)';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      title={copied ? 'Copied!' : 'Copy link'}
+                    >
+                      {copied ? (
+                        <span style={{ fontSize: '1.2rem' }}>✓</span>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      )}
+                    </button>
+                  )}
+                </div>
+
                 {shareUrl && (
                   <button
-                    onClick={handleCopyLink}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      transition: 'color 0.2s, transform 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'var(--partner1)';
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                    title={copied ? 'Copied!' : 'Copy link'}
+                    className="btn btn--accent btn--full"
+                    onClick={handleSendInvite}
+                    style={{ marginTop: '8px' }}
                   >
-                    {copied ? (
-                      <span style={{ fontSize: '1.2rem' }}>✓</span>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                      </svg>
-                    )}
+                    Send Invite Link
                   </button>
                 )}
               </div>
-
-              {shareUrl && (
-                <button 
-                  className="btn btn--accent btn--full" 
-                  onClick={handleSendInvite}
-                  style={{ marginTop: '8px' }}
-                >
-                  Send Invite Link
-                </button>
-              )}
-            </div>
+            )}
 
             {/* Only show waiting message after link is copied or sent */}
             {hasShared && (

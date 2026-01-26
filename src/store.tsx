@@ -607,6 +607,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const suppressBroadcastRef = useRef(false);
   const pendingHostSnapshotRef = useRef(false);
   const presenceAnnouncedRef = useRef<{ [sessionId: string]: boolean }>({});
+  const connectedSessionRef = useRef<string | null>(null);
 
   const internalDispatch = (action: GameAction) => {
     suppressBroadcastRef.current = true;
@@ -745,11 +746,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // Connect/disconnect Supabase broadcast channel for remote sessions
   useEffect(() => {
     const sessionId = state.remoteSessionId;
+    const playerId = state.remotePlayerId;
+
     if (state.gameMode !== 'remote' || !sessionId) {
+      connectedSessionRef.current = null;
+      presenceAnnouncedRef.current = {};
       internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
       void syncRef.current?.disconnect();
-      // Reset presence tracking when session ends
-      presenceAnnouncedRef.current = {};
+      return;
+    }
+
+    // Skip reconnection if already connected to this session
+    if (connectedSessionRef.current === sessionId) {
       return;
     }
 
@@ -759,11 +767,25 @@ export function GameProvider({ children }: { children: ReactNode }) {
       sessionId,
       onStatus: (status) => {
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
+
+        // When connected, announce presence for Player 1
+        // Player 2's presence is handled in dispatch wrapper when they accept
+        if (status === 'connected') {
+          connectedSessionRef.current = sessionId;
+
+          if (playerId === 1) {
+            const key = `${sessionId}-${playerId}`;
+            if (!presenceAnnouncedRef.current[key]) {
+              presenceAnnouncedRef.current[key] = true;
+              void syncRef.current?.sendPresence(playerId);
+            }
+          }
+        }
       },
       onMessage: (msg) => {
         if (msg.type === 'action') {
           const action = msg.payload as GameAction;
-          
+
           // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
           if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
             const state = action.state as Partial<GameState>;
@@ -779,7 +801,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
               return;
             }
           }
-          
+
           // Apply actions from the other player without re-broadcasting
           suppressBroadcastRef.current = true;
           try {
@@ -819,20 +841,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
     });
-
-    // Announce presence - ONLY for Player 1
-    // Player 2's presence is handled explicitly in dispatch wrapper when they accept
-    const playerId = state.remotePlayerId;
-    const shouldAnnouncePresence = playerId === 1; // Only Player 1 uses this effect
-
-    if (playerId && shouldAnnouncePresence && sessionId) {
-      const key = `${sessionId}-${playerId}`;
-      // Only send if not already announced this session
-      if (!presenceAnnouncedRef.current[key]) {
-        presenceAnnouncedRef.current[key] = true;
-        void syncRef.current.sendPresence(playerId);
-      }
-    }
   }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
