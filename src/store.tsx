@@ -381,6 +381,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'ACCEPT_REMOTE_INVITE':
       // Player 2 explicitly accepts - this will trigger presence send
+      console.log('[Remote Session] ACCEPT_REMOTE_INVITE', {
+        oldScreen: state.currentScreen,
+        newScreen: 'remoteSetup',
+        remotePlayerId: state.remotePlayerId,
+        remoteSessionId: state.remoteSessionId,
+        isRemoteConnected: state.isRemoteConnected
+      });
       return {
         ...state,
         currentScreen: 'remoteSetup' // Temporary, will navigate to round1 after sync
@@ -660,6 +667,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Connect/disconnect Supabase broadcast channel for remote sessions
   useEffect(() => {
+    console.log('[Remote Session] Connection effect executing', {
+      gameMode: state.gameMode,
+      remoteSessionId: state.remoteSessionId,
+      remotePlayerId: state.remotePlayerId,
+      currentScreen: state.currentScreen
+    });
     const sessionId = state.remoteSessionId;
     if (state.gameMode !== 'remote' || !sessionId) {
       internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
@@ -669,9 +682,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     if (!syncRef.current) syncRef.current = new SupabaseSync();
 
+    console.log('[Remote Session] Connecting to Supabase', { sessionId });
+
     void syncRef.current.connect({
       sessionId,
       onStatus: (status) => {
+        console.log('[Remote Session] Supabase status changed', { status });
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
       },
       onMessage: (msg) => {
@@ -740,7 +756,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
       (playerId === 2 && state.currentScreen !== 'inviteAcceptance')) &&
       state.isRemoteConnected; // CRITICAL: Only send when connected
 
+    console.log('[Remote Session] Presence effect executing', {
+      playerId,
+      currentScreen: state.currentScreen,
+      shouldAnnouncePresence,
+      isRemoteConnected: state.isRemoteConnected,
+      hasSyncRef: !!syncRef.current,
+      remoteSessionId: state.remoteSessionId
+    });
+
     if (playerId && shouldAnnouncePresence && syncRef.current) {
+      console.log('[Remote Session] Sending presence', { playerId });
       void syncRef.current.sendPresence(playerId);
     }
   }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen, state.isRemoteConnected]);

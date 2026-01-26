@@ -5,7 +5,14 @@ export function InviteAcceptance() {
   const { state, dispatch } = useGame();
 
   const handleAccept = () => {
+    console.log('[Remote Session] Accept button clicked', {
+      currentScreen: state.currentScreen,
+      remotePlayerId: state.remotePlayerId,
+      remoteSessionId: state.remoteSessionId,
+      gameMode: state.gameMode
+    });
     dispatch({ type: 'ACCEPT_REMOTE_INVITE' });
+    console.log('[Remote Session] Accept action dispatched');
   };
 
   const handleDecline = () => {

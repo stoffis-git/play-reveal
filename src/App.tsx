@@ -121,6 +121,7 @@ function GameRouter() {
 }
 
 function App() {
+  console.log('[App] Component rendering', { pathname: window.location.pathname });
   return (
     <GameProvider>
       <RemoteSessionOverlay />
