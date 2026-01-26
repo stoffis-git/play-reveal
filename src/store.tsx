@@ -680,6 +680,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Prevent re-connecting if already connected to the same session
+    if (syncRef.current && state.isRemoteConnected && stateRef.current.remoteSessionId === sessionId) {
+      console.log('[Remote Session] Already connected to session', { sessionId });
+      return;
+    }
+
     if (!syncRef.current) syncRef.current = new SupabaseSync();
 
     console.log('[Remote Session] Connecting to Supabase', { sessionId });
@@ -749,7 +755,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
       }
     });
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]); // Removed isRemoteConnected and currentScreen to prevent loops
 
+  // Separate effect for sending presence - only runs when connection status or screen changes
+  useEffect(() => {
     // Announce presence - but ONLY if Player 2 has explicitly accepted AND connected
     const playerId = state.remotePlayerId;
     const shouldAnnouncePresence = (playerId === 1 || 
@@ -769,7 +778,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       console.log('[Remote Session] Sending presence', { playerId });
       void syncRef.current.sendPresence(playerId);
     }
-  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen, state.isRemoteConnected]);
+  }, [state.remotePlayerId, state.currentScreen, state.isRemoteConnected]); // Separate effect for presence
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
