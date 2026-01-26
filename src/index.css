@@ -1694,6 +1694,46 @@ h3 {
   margin-top: 4px;
 }
 
+/* Spectator Mode Styles */
+.game-card--spectator {
+  cursor: not-allowed;
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.game-card--spectator:hover {
+  transform: none;
+  box-shadow: var(--card-shadow);
+}
+
+.question-modal--spectator {
+  pointer-events: none;
+}
+
+.question-modal--spectator .question-modal__option {
+  cursor: default;
+  pointer-events: none;
+}
+
+.question-modal__option--selected {
+  border: 3px solid var(--match-green) !important;
+  background: var(--match-green-light) !important;
+  box-shadow: 0 0 0 4px rgba(94, 207, 177, 0.2) !important;
+  transform: scale(1.02);
+}
+
+.question-modal__option--selected .question-modal__option-letter {
+  background: var(--match-green) !important;
+  color: white !important;
+}
+
+.reveal-screen--waiting {
+  padding: 16px;
+  background: var(--bg-secondary);
+  border-radius: 12px;
+  margin-top: 16px;
+}
+
 /* Utility */
 .text-center { text-align: center; }
 .mb-4 { margin-bottom: 16px; }

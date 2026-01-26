@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useGame, getMatchCount, getThemeSummaries } from '../store';
+import { useGame, getMatchCount, getThemeSummaries, isActivePlayer } from '../store';
 import { getQuestionWithExample, getRound2Intro, round1Questions } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
@@ -28,37 +28,70 @@ interface CardPosition {
 export function GameBoard({ round }: GameBoardProps) {
   const { state, dispatch } = useGame();
   const [showIntro, setShowIntro] = useState(true); // Show "whose turn" intro
+  const [showRemoteIntro, setShowRemoteIntro] = useState(false); // Show remote mode intro
   const [showPassDevice, setShowPassDevice] = useState(false);
   const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
   const [revealedCard, setRevealedCard] = useState<Card | null>(null);
+  const [selectedAnswer, setSelectedAnswer] = useState<'A' | 'B' | null>(null);
   const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
   const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
+  const activePlayer = isActivePlayer(state);
   const matchCount = getMatchCount(cards);
   const revealedCount = cards.filter(c => c.state === 'revealed').length;
 
   // When card is selected, start animation
   useEffect(() => {
-    if (state.selectedCardIndex !== null && cardPosition) {
-      setIsAnimating(true);
-      // After animation completes, show the question
-      const timer = setTimeout(() => {
+    if (state.selectedCardIndex !== null) {
+      if (cardPosition) {
+        // Active player: show animation then question
+        setIsAnimating(true);
+        const timer = setTimeout(() => {
+          setShowQuestion(true);
+          setIsAnimating(false);
+        }, 400);
+        return () => clearTimeout(timer);
+      } else if (isRemote && !activePlayer) {
+        // Spectator: show question immediately (no animation)
         setShowQuestion(true);
-        setIsAnimating(false);
-      }, 400);
-      return () => clearTimeout(timer);
+      }
+    } else {
+      setShowQuestion(false);
     }
-  }, [state.selectedCardIndex, cardPosition]);
+  }, [state.selectedCardIndex, cardPosition, isRemote, activePlayer]);
+
+  // Show remote intro screen when entering round 1 in remote mode
+  useEffect(() => {
+    if (isRemote && round === 1 && state.currentScreen === 'round1' && cards.length > 0) {
+      // Check if this is the first time entering (no cards revealed yet)
+      const hasRevealedCards = cards.some(c => c.state === 'revealed');
+      if (!hasRevealedCards) {
+        setShowRemoteIntro(true);
+        // Auto-dismiss after 1 second
+        const timer = setTimeout(() => {
+          setShowRemoteIntro(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+      }
+    } else {
+      setShowRemoteIntro(false);
+    }
+  }, [isRemote, round, state.currentScreen, cards]);
 
   // Handle answer selection
   const handleAnswer = (answer: 'A' | 'B') => {
-    setShowQuestion(false);
-    setCardPosition(null);
+    // Set local selectedAnswer immediately for active player highlight
+    setSelectedAnswer(answer);
+    
+    // Broadcast SELECT_ANSWER immediately for spectator highlight
+    if (isRemote && state.selectedCardIndex !== null) {
+      dispatch({ type: 'SELECT_ANSWER', answer, cardIndex: state.selectedCardIndex });
+    }
 
     // Check if this will reveal the card (both partners will have answered)
     const selectedCard = state.selectedCardIndex !== null ? cards[state.selectedCardIndex] : null;
@@ -67,29 +100,36 @@ export function GameBoard({ round }: GameBoardProps) {
       (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
     );
 
-    // Delay to show card flip animation
+    // Delay 0.5 seconds before closing modal and processing answer
     setTimeout(() => {
-      if (willReveal && selectedCard) {
-        // Create a copy of the card with the answer for the reveal screen
-        const cardWithAnswer: Card = {
-          ...selectedCard,
-          state: 'revealed',
-          answer: {
-            ...selectedCard.answer,
-            ...(state.currentPlayer === 1 
-              ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
-              : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
-            )
-          }
-        };
-        setRevealedCard(cardWithAnswer);
-      }
-      dispatch({ type: 'ANSWER_QUESTION', answer });
-      // Only show pass device if not showing reveal screen
-      if (!willReveal) {
-        setShowPassDevice(true);
-      }
-    }, 300);
+      setShowQuestion(false);
+      setCardPosition(null);
+      setSelectedAnswer(null);
+
+      // Delay to show card flip animation
+      setTimeout(() => {
+        if (willReveal && selectedCard) {
+          // Create a copy of the card with the answer for the reveal screen
+          const cardWithAnswer: Card = {
+            ...selectedCard,
+            state: 'revealed',
+            answer: {
+              ...selectedCard.answer,
+              ...(state.currentPlayer === 1 
+                ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
+                : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
+              )
+            }
+          };
+          setRevealedCard(cardWithAnswer);
+        }
+        dispatch({ type: 'ANSWER_QUESTION', answer });
+        // Only show pass device if not showing reveal screen and not remote
+        if (!willReveal && !isRemote) {
+          setShowPassDevice(true);
+        }
+      }, 300);
+    }, 500);
   };
 
   // Handle continue from reveal screen
@@ -107,6 +147,7 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const handleCardClick = (index: number) => {
     if (isRemote && !state.isRemoteConnected) return;
+    if (isRemote && !activePlayer) return;
     const card = cards[index];
     const cardEl = cardRefs.current[index];
     
@@ -153,6 +194,10 @@ export function GameBoard({ round }: GameBoardProps) {
     
     if (isAnimating && state.selectedCardIndex === index) {
       className += ' game-card--animating-out';
+    }
+    
+    if (isRemote && !activePlayer) {
+      className += ' game-card--spectator';
     }
     
     return className;
@@ -266,8 +311,41 @@ export function GameBoard({ round }: GameBoardProps) {
 
   return (
     <div className="game-container">
-      {/* Intro screen - whose turn is it */}
-      {showIntro && (
+      {/* Remote mode intro screen - timeboxed 1 second */}
+      {showRemoteIntro && isRemote && (
+        <div className={`intro-screen intro-screen--partner${state.currentPlayer}`}>
+          <div className="intro-screen__content">
+            <div className="intro-screen__round">
+              Round {round}
+            </div>
+            <div className="intro-screen__icon">
+              {state.currentPlayer === 1 ? '💙' : '💗'}
+            </div>
+            {state.remotePlayerId === 1 ? (
+              <>
+                <h2 className="intro-screen__title">
+                  It's Your Turn
+                </h2>
+                <p className="intro-screen__subtitle">
+                  {state.partner1Name}, you're up first!
+                </p>
+              </>
+            ) : (
+              <>
+                <h2 className="intro-screen__title">
+                  {state.partner1Name}'s Turn
+                </h2>
+                <p className="intro-screen__subtitle">
+                  Waiting for {state.partner1Name} to start...
+                </p>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Intro screen - whose turn is it (local mode only) */}
+      {showIntro && !isRemote && (
         <div className={`intro-screen intro-screen--partner${state.currentPlayer}`}>
           <div className="intro-screen__content">
             <div className="intro-screen__round">
@@ -458,9 +536,9 @@ export function GameBoard({ round }: GameBoardProps) {
       )}
 
       {/* Question modal - no closing by clicking outside, must answer */}
-      {showQuestion && selectedQuestion && selectedCard && (
+      {showQuestion && selectedQuestion && selectedCard && (activePlayer || isRemote) && (
         <div className="question-overlay">
-          <div className={`question-modal question-modal--player${state.currentPlayer} animate-modal-in`}>
+          <div className={`question-modal question-modal--player${state.currentPlayer} ${!activePlayer ? 'question-modal--spectator' : ''} animate-modal-in`}>
             {/* Round 2 intro explaining why this question */}
             {round === 2 && (
               <div className="question-modal__intro" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
@@ -489,6 +567,12 @@ export function GameBoard({ round }: GameBoardProps) {
               </div>
             )}
             
+            {!activePlayer && (
+              <p style={{ textAlign: 'center', fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '16px', fontStyle: 'italic' }}>
+                Watching {currentPlayerName} answer...
+              </p>
+            )}
+            
             <p className="question-modal__text">
               {selectedQuestion.text}
             </p>
@@ -498,24 +582,45 @@ export function GameBoard({ round }: GameBoardProps) {
               </p>
             )}
             <div className="question-modal__options">
-              <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
-                onClick={() => handleAnswer('A')}
-              >
-                <span className="question-modal__option-letter">A</span>
-                <span className="question-modal__option-text">{selectedQuestion.optionA}</span>
-              </button>
-              <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
-                onClick={() => handleAnswer('B')}
-              >
-                <span className="question-modal__option-letter">B</span>
-                <span className="question-modal__option-text">{selectedQuestion.optionB}</span>
-              </button>
+              {activePlayer ? (
+                <>
+                  <button
+                    className={`question-modal__option question-modal__option--player${state.currentPlayer} ${selectedAnswer === 'A' ? 'question-modal__option--selected' : ''}`}
+                    onClick={() => handleAnswer('A')}
+                  >
+                    <span className="question-modal__option-letter">A</span>
+                    <span className="question-modal__option-text">{selectedQuestion.optionA}</span>
+                  </button>
+                  <button
+                    className={`question-modal__option question-modal__option--player${state.currentPlayer} ${selectedAnswer === 'B' ? 'question-modal__option--selected' : ''}`}
+                    onClick={() => handleAnswer('B')}
+                  >
+                    <span className="question-modal__option-letter">B</span>
+                    <span className="question-modal__option-text">{selectedQuestion.optionB}</span>
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div
+                    className={`question-modal__option question-modal__option--player${state.currentPlayer} ${(state.selectedAnswer === 'A' || selectedAnswer === 'A') ? 'question-modal__option--selected' : ''}`}
+                  >
+                    <span className="question-modal__option-letter">A</span>
+                    <span className="question-modal__option-text">{selectedQuestion.optionA}</span>
+                  </div>
+                  <div
+                    className={`question-modal__option question-modal__option--player${state.currentPlayer} ${(state.selectedAnswer === 'B' || selectedAnswer === 'B') ? 'question-modal__option--selected' : ''}`}
+                  >
+                    <span className="question-modal__option-letter">B</span>
+                    <span className="question-modal__option-text">{selectedQuestion.optionB}</span>
+                  </div>
+                </>
+              )}
             </div>
-            <p className="question-modal__hint">
-              {currentPlayerName}, tap your answer
-            </p>
+            {activePlayer && (
+              <p className="question-modal__hint">
+                {currentPlayerName}, tap your answer
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -527,11 +632,14 @@ export function GameBoard({ round }: GameBoardProps) {
           partner1Name={state.partner1Name}
           partner2Name={state.partner2Name}
           onContinue={handleRevealContinue}
+          isRemote={isRemote}
+          isMyTurn={isRemote ? (state.currentPlayer === state.remotePlayerId) : true}
+          nextPlayerName={state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
         />
       )}
 
       {/* Pass device screen */}
-      {showPassDevice && (
+      {showPassDevice && !isRemote && (
         <div className={`pass-device pass-device--partner${state.currentPlayer}`}>
           <div className="pass-device__icon">📱</div>
           <h2 className="pass-device__text">Pass to</h2>

@@ -63,6 +63,7 @@ export interface GameState {
   round2Complete: boolean;
   hasPaid: boolean;
   selectedCardIndex: number | null;
+  selectedAnswer: 'A' | 'B' | null;
 
   // Remote mode
   gameMode: 'local' | 'remote';
