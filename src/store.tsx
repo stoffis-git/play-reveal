@@ -643,6 +643,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (isConnectedRef.current && syncRef.current) {
           console.log('[Remote Session] Manually sending presence after accept', { playerId: 2 });
           void syncRef.current.sendPresence(2);
+          
+          // Fallback: If Player 2 doesn't receive game state within 3 seconds, 
+          // check if game has already started and navigate directly
+          setTimeout(() => {
+            const checkState = stateRef.current;
+            if (checkState.remotePlayerId === 2 && checkState.round1Cards.length > 0 && checkState.currentScreen !== 'round1') {
+              console.log('[Remote Session] Fallback: Player 2 has game state but not on round1, navigating now');
+              internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
+            }
+          }, 3000);
         } else {
           console.log('[Remote Session] Cannot send presence yet - not connected', { 
             isConnected: isConnectedRef.current,
