@@ -254,6 +254,12 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'NAVIGATE_TO':
+      console.log('[Remote Session] NAVIGATE_TO action', {
+        from: state.currentScreen,
+        to: action.screen,
+        remotePlayerId: state.remotePlayerId,
+        remoteSessionId: state.remoteSessionId
+      });
       return {
         ...state,
         currentScreen: action.screen
@@ -718,12 +724,29 @@ export function GameProvider({ children }: { children: ReactNode }) {
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: isConnected });
       },
       onMessage: (msg) => {
+        console.log('[Remote Session] Received message', { 
+          type: msg.type, 
+          playerId: stateRef.current.remotePlayerId,
+          currentScreen: stateRef.current.currentScreen
+        });
+        
         if (msg.type === 'action') {
           const action = msg.payload as GameAction;
+          console.log('[Remote Session] Received action', { 
+            actionType: action.type,
+            playerId: stateRef.current.remotePlayerId
+          });
           
           // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
           if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
             const remoteState = action.state as Partial<GameState>;
+            console.log('[Remote Session] Player 2 processing APPLY_REMOTE_STATE', {
+              hasRound1Cards: !!(remoteState.round1Cards && remoteState.round1Cards.length > 0),
+              round1CardsCount: remoteState.round1Cards?.length || 0,
+              currentScreen: stateRef.current.currentScreen,
+              remoteStateScreen: remoteState.currentScreen
+            });
+            
             if (remoteState.round1Cards && remoteState.round1Cards.length > 0) {
               // Game has started, navigate Player 2 to Round 1 immediately
               console.log('[Remote Session] Player 2 received game state, navigating to Round 1', {
@@ -733,11 +756,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
               suppressBroadcastRef.current = true;
               try {
                 rawDispatch(action);
+                console.log('[Remote Session] Dispatched APPLY_REMOTE_STATE, now navigating to round1');
                 internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
+                console.log('[Remote Session] Navigation to round1 dispatched');
               } finally {
                 suppressBroadcastRef.current = false;
               }
               return;
+            } else {
+              console.log('[Remote Session] APPLY_REMOTE_STATE received but no round1Cards, skipping navigation');
             }
           }
           
@@ -769,13 +796,21 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (msg.type === 'presence') {
           // If I'm host and player2 joins, start the game and sync snapshot.
           const current = stateRef.current;
+          console.log('[Remote Session] Received presence message', {
+            myPlayerId: current.remotePlayerId,
+            presencePlayer: msg.payload.player,
+            willStartGame: current.remotePlayerId === 1 && msg.payload.player === 2
+          });
+          
           if (current.remotePlayerId === 1 && msg.payload.player === 2) {
+            console.log('[Remote Session] Player 1: Player 2 joined, starting game');
             internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
             pendingHostSnapshotRef.current = true;
             // Start game - this will navigate both players to round1
             internalDispatch({ type: 'START_GAME', partner1Name: current.partner1Name, partner2Name: current.partner2Name });
             // Immediately navigate Player 1 to round1 (START_GAME already does this, but ensure it)
             internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
+            console.log('[Remote Session] Player 1: Game started, snapshot will be sent');
           }
         }
       }
@@ -808,19 +843,35 @@ export function GameProvider({ children }: { children: ReactNode }) {
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
     const s = state;
+    console.log('[Remote Session] Snapshot effect checking', {
+      gameMode: s.gameMode,
+      remotePlayerId: s.remotePlayerId,
+      hasSessionId: !!s.remoteSessionId,
+      isRemoteConnected: s.isRemoteConnected,
+      isConnectedRef: isConnectedRef.current,
+      pendingSnapshot: pendingHostSnapshotRef.current,
+      hasRound1Cards: s.round1Cards.length > 0
+    });
+    
     if (
       s.gameMode !== 'remote' ||
       s.remotePlayerId !== 1 ||
       !s.remoteSessionId ||
-      !s.isRemoteConnected ||
+      !isConnectedRef.current || // Use ref instead of state for connection check
       !pendingHostSnapshotRef.current
     ) {
+      console.log('[Remote Session] Snapshot effect conditions not met, skipping');
       return;
     }
 
+    console.log('[Remote Session] Sending snapshot to Player 2', {
+      round1CardsCount: s.round1Cards.length,
+      currentScreen: s.currentScreen
+    });
     pendingHostSnapshotRef.current = false;
     void syncRef.current?.sendSessionPaid();
     void syncRef.current?.sendAction({ type: 'APPLY_REMOTE_STATE', state: getShareableState(s) });
+    console.log('[Remote Session] Snapshot sent');
   }, [state]);
 
   // Persist state on every change
