@@ -254,6 +254,10 @@ function gameReducer(state: GameState, action: GameAction): GameState {
     }
 
     case 'NAVIGATE_TO':
+      // Prevent unnecessary state updates if already on that screen
+      if (state.currentScreen === action.screen) {
+        return state;
+      }
       console.log('[Remote Session] NAVIGATE_TO action', {
         from: state.currentScreen,
         to: action.screen,
@@ -841,11 +845,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [state.remotePlayerId, state.currentScreen, state.isRemoteConnected]); // Separate effect for presence
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
+  // ONLY runs for Player 1 (host)
   useEffect(() => {
     const s = state;
-    console.log('[Remote Session] Snapshot effect checking', {
+    
+    // Early return for Player 2 - no logging to prevent spam
+    if (s.remotePlayerId !== 1) {
+      return;
+    }
+    
+    console.log('[Remote Session] Snapshot effect checking (Player 1 only)', {
       gameMode: s.gameMode,
-      remotePlayerId: s.remotePlayerId,
       hasSessionId: !!s.remoteSessionId,
       isRemoteConnected: s.isRemoteConnected,
       isConnectedRef: isConnectedRef.current,
@@ -855,13 +865,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     if (
       s.gameMode !== 'remote' ||
-      s.remotePlayerId !== 1 ||
       !s.remoteSessionId ||
       !isConnectedRef.current || // Use ref instead of state for connection check
       !pendingHostSnapshotRef.current
     ) {
-      console.log('[Remote Session] Snapshot effect conditions not met, skipping');
-      return;
+      return; // Removed log to prevent spam
     }
 
     console.log('[Remote Session] Sending snapshot to Player 2', {
