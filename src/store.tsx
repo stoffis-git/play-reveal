@@ -744,7 +744,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    // Announce presence - but ONLY if Player 2 has explicitly accepted
+    // Announce presence - but ONLY if Player 2 has explicitly accepted AND connection is established
     const playerId = state.remotePlayerId;
     const shouldAnnouncePresence = playerId === 1 || 
       (playerId === 2 && state.currentScreen !== 'inviteAcceptance');
@@ -753,13 +753,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:743',message:'Presence effect executing',data:{playerId:playerId,currentScreen:state.currentScreen,shouldAnnouncePresence:shouldAnnouncePresence,isRemoteConnected:state.isRemoteConnected,hasSyncRef:!!syncRef.current,remoteSessionId:state.remoteSessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1,H3,H4'})}).catch(()=>{});
     // #endregion
 
-    if (playerId && shouldAnnouncePresence) {
+    // CRITICAL FIX: Only send presence if connected AND conditions are met
+    if (playerId && shouldAnnouncePresence && state.isRemoteConnected && syncRef.current) {
       // #region agent log
       fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:748',message:'Sending presence',data:{playerId:playerId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
       // #endregion
       void syncRef.current.sendPresence(playerId);
     }
-  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen]);
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen, state.isRemoteConnected]);
 
   // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
