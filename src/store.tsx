@@ -606,8 +606,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case 'SELECT_CARD':
       case 'ANSWER_QUESTION':
       case 'COMPLETE_ROUND':
-      case 'NAVIGATE_TO':
-      case 'APPLY_REMOTE_STATE':
+        // Removed NAVIGATE_TO - navigation should be local only
+        // Removed APPLY_REMOTE_STATE - this is sent explicitly via sendAction, not broadcast
         return true;
       default:
         return false;
@@ -738,17 +738,20 @@ export function GameProvider({ children }: { children: ReactNode }) {
           if (current.remotePlayerId === 1 && msg.payload.player === 2) {
             internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
             pendingHostSnapshotRef.current = true;
+            // Start game - this will navigate both players to round1
             internalDispatch({ type: 'START_GAME', partner1Name: current.partner1Name, partner2Name: current.partner2Name });
+            // Immediately navigate Player 1 to round1 (START_GAME already does this, but ensure it)
+            internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
           }
         }
       }
     });
 
-    // Announce presence - but ONLY if Player 2 has explicitly accepted AND connection is ready
+    // Announce presence - but ONLY if Player 2 has explicitly accepted AND connected
     const playerId = state.remotePlayerId;
     const shouldAnnouncePresence = (playerId === 1 || 
       (playerId === 2 && state.currentScreen !== 'inviteAcceptance')) &&
-      state.isRemoteConnected;
+      state.isRemoteConnected; // CRITICAL: Only send when connected
 
     // #region agent log
     fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:743',message:'Presence effect executing',data:{playerId:playerId,currentScreen:state.currentScreen,shouldAnnouncePresence:shouldAnnouncePresence,isRemoteConnected:state.isRemoteConnected,hasSyncRef:!!syncRef.current,remoteSessionId:state.remoteSessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1,H3,H4'})}).catch(()=>{});
