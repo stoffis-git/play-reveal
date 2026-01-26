@@ -723,9 +723,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
           
           // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
           if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
-            const state = action.state as Partial<GameState>;
-            if (state.round1Cards && state.round1Cards.length > 0 && state.currentScreen === 'round1') {
-              // Game has started, navigate Player 2 to Round 1
+            const remoteState = action.state as Partial<GameState>;
+            if (remoteState.round1Cards && remoteState.round1Cards.length > 0) {
+              // Game has started, navigate Player 2 to Round 1 immediately
+              console.log('[Remote Session] Player 2 received game state, navigating to Round 1', {
+                round1CardsCount: remoteState.round1Cards.length,
+                currentScreen: stateRef.current.currentScreen
+              });
               suppressBroadcastRef.current = true;
               try {
                 rawDispatch(action);
