@@ -13,10 +13,16 @@ function GameRouter() {
     if (!match) return;
     const code = match[1].toUpperCase();
 
-    dispatch({ type: 'SELECT_MODE', mode: 'remote' });
-    dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
-    dispatch({ type: 'NAVIGATE_TO', screen: 'inviteAcceptance' });
-  }, [dispatch]);
+    // Only set up remote session if not already set up for this session
+    if (state.remoteSessionId !== code || state.remotePlayerId !== 2) {
+      dispatch({ type: 'SELECT_MODE', mode: 'remote' });
+      dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
+      // Only navigate to inviteAcceptance if not already there or in game
+      if (state.currentScreen !== 'inviteAcceptance' && state.currentScreen !== 'round1' && state.currentScreen !== 'round2') {
+        dispatch({ type: 'NAVIGATE_TO', screen: 'inviteAcceptance' });
+      }
+    }
+  }, [dispatch, state.remoteSessionId, state.remotePlayerId, state.currentScreen]);
 
   // Prevent zoom on screen changes - reset viewport scale
   useEffect(() => {
