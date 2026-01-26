@@ -9,9 +9,12 @@ export function getSupabaseClient(): SupabaseClient {
   const publishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
 
   if (!url || !publishableKey) {
-    throw new Error('Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY');
+    const error = 'Missing VITE_SUPABASE_URL or VITE_SUPABASE_PUBLISHABLE_KEY';
+    console.error('[Supabase]', error, { hasUrl: !!url, hasKey: !!publishableKey });
+    throw new Error(error);
   }
 
+  console.log('[Supabase] Initializing client with URL:', url.substring(0, 30) + '...');
   cachedClient = createClient(url, publishableKey);
   return cachedClient;
 }

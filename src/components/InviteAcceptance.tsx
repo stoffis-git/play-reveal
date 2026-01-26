@@ -5,13 +5,8 @@ export function InviteAcceptance() {
   const { state, dispatch } = useGame();
 
   const handleAccept = () => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InviteAcceptance.tsx:8',message:'Accept button clicked',data:{currentScreen:state.currentScreen,remotePlayerId:state.remotePlayerId,remoteSessionId:state.remoteSessionId,gameMode:state.gameMode},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H2,H5'})}).catch(()=>{});
-    // #endregion
+    console.log('[InviteAcceptance] Accept clicked. Session:', state.remoteSessionId, 'Player:', state.remotePlayerId);
     dispatch({ type: 'ACCEPT_REMOTE_INVITE' });
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'InviteAcceptance.tsx:11',message:'Accept action dispatched',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H2,H5'})}).catch(()=>{});
-    // #endregion
   };
 
   const handleDecline = () => {

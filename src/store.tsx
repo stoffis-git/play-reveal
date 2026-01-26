@@ -381,9 +381,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'ACCEPT_REMOTE_INVITE':
       // Player 2 explicitly accepts - this will trigger presence send
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:384',message:'ACCEPT_REMOTE_INVITE action handler',data:{oldScreen:state.currentScreen,newScreen:'remoteSetup',remotePlayerId:state.remotePlayerId,remoteSessionId:state.remoteSessionId,isRemoteConnected:state.isRemoteConnected},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H2'})}).catch(()=>{});
-      // #endregion
+      console.log('[Game] Player 2 accepted invite. Session:', state.remoteSessionId, 'Connected:', state.isRemoteConnected);
       return {
         ...state,
         currentScreen: 'remoteSetup' // Temporary, will navigate to round1 after sync
@@ -663,9 +661,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Connect/disconnect Supabase broadcast channel for remote sessions
   useEffect(() => {
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:666',message:'Supabase connection effect executing',data:{gameMode:state.gameMode,remoteSessionId:state.remoteSessionId,remotePlayerId:state.remotePlayerId,currentScreen:state.currentScreen},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
     const sessionId = state.remoteSessionId;
     if (state.gameMode !== 'remote' || !sessionId) {
       internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
@@ -675,16 +670,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
     if (!syncRef.current) syncRef.current = new SupabaseSync();
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:679',message:'Connecting to Supabase',data:{sessionId:sessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-    // #endregion
-
     void syncRef.current.connect({
       sessionId,
       onStatus: (status) => {
-        // #region agent log
-        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:687',message:'Supabase status changed',data:{status:status},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-        // #endregion
+        console.log('[Supabase] Connection status:', status, 'for session:', sessionId);
+        if (status === 'error') {
+          console.error('[Supabase] Connection error for session:', sessionId);
+        }
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
       },
       onMessage: (msg) => {
@@ -749,16 +741,14 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const shouldAnnouncePresence = playerId === 1 || 
       (playerId === 2 && state.currentScreen !== 'inviteAcceptance');
 
-    // #region agent log
-    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:743',message:'Presence effect executing',data:{playerId:playerId,currentScreen:state.currentScreen,shouldAnnouncePresence:shouldAnnouncePresence,isRemoteConnected:state.isRemoteConnected,hasSyncRef:!!syncRef.current,remoteSessionId:state.remoteSessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1,H3,H4'})}).catch(()=>{});
-    // #endregion
-
     // CRITICAL FIX: Only send presence if connected AND conditions are met
     if (playerId && shouldAnnouncePresence && state.isRemoteConnected && syncRef.current) {
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:748',message:'Sending presence',data:{playerId:playerId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
-      // #endregion
-      void syncRef.current.sendPresence(playerId);
+      console.log('[Supabase] Sending presence for player:', playerId, 'session:', sessionId);
+      void syncRef.current.sendPresence(playerId).catch((err) => {
+        console.error('[Supabase] Failed to send presence:', err);
+      });
+    } else if (playerId && shouldAnnouncePresence && !state.isRemoteConnected) {
+      console.log('[Supabase] Waiting for connection before sending presence. Player:', playerId, 'Connected:', state.isRemoteConnected);
     }
   }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen, state.isRemoteConnected]);
 
