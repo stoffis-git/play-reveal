@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { useGame, getMatchCount, getThemeSummaries, isActivePlayer, isSpectatorMode } from '../store';
+import { useGame, getMatchCount, getThemeSummaries } from '../store';
 import { getQuestionWithExample, getRound2Intro, round1Questions } from '../questions';
 import { RevealScreen } from './RevealScreen';
 import { Menu } from './Menu';
@@ -39,8 +39,6 @@ export function GameBoard({ round }: GameBoardProps) {
   const cards = round === 1 ? state.round1Cards : state.round2Cards;
   const currentPlayerName = state.currentPlayer === 1 ? state.partner1Name : state.partner2Name;
   const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
-  const activePlayer = isActivePlayer(state);
-  const spectatorMode = isSpectatorMode(state);
   const matchCount = getMatchCount(cards);
   const revealedCount = cards.filter(c => c.state === 'revealed').length;
 
@@ -56,36 +54,16 @@ export function GameBoard({ round }: GameBoardProps) {
           setIsAnimating(false);
         }, 400);
         return () => clearTimeout(timer);
-      } else if (isRemote && spectatorMode) {
-        // For spectator, show question immediately without animation
-        setShowQuestion(true);
-        setIsAnimating(false);
       }
     } else {
       // Card deselected, hide question
       setShowQuestion(false);
       setIsAnimating(false);
     }
-  }, [state.selectedCardIndex, cardPosition, isRemote, spectatorMode]);
-
-  // Close question modal when selectedAnswer is cleared (after ANSWER_QUESTION is processed)
-  useEffect(() => {
-    if (isRemote && spectatorMode && state.selectedCardIndex === null && state.selectedAnswer === null) {
-      setShowQuestion(false);
-    }
-  }, [state.selectedCardIndex, state.selectedAnswer, isRemote, spectatorMode]);
+  }, [state.selectedCardIndex, cardPosition]);
 
   // Handle answer selection
   const handleAnswer = (answer: 'A' | 'B') => {
-    if (!activePlayer) return; // Only active player can answer
-    
-    const cardIndex = state.selectedCardIndex;
-    if (cardIndex === null) return;
-
-    // Immediately broadcast SELECT_ANSWER for highlighting
-    if (isRemote) {
-      dispatch({ type: 'SELECT_ANSWER', answer, cardIndex });
-    }
 
     // Delay before closing question modal and processing answer
     setTimeout(() => {
@@ -93,7 +71,7 @@ export function GameBoard({ round }: GameBoardProps) {
       setCardPosition(null);
 
       // Check if this will reveal the card (both partners will have answered)
-      const selectedCard = cards[cardIndex];
+      const selectedCard = state.selectedCardIndex !== null ? cards[state.selectedCardIndex] : null;
       const willReveal = selectedCard && (
         (state.currentPlayer === 1 && selectedCard.state === 'partner2Only') ||
         (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
@@ -140,8 +118,6 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const handleCardClick = (index: number) => {
     if (isRemote && !state.isRemoteConnected) return;
-    // In remote mode, only allow clicks if this player is the active player
-    if (isRemote && !activePlayer) return;
     
     const card = cards[index];
     const cardEl = cardRefs.current[index];
@@ -187,10 +163,6 @@ export function GameBoard({ round }: GameBoardProps) {
       className += ' game-card--disabled';
     }
     
-    // Add spectator class in remote mode when not active player
-    if (isRemote && spectatorMode) {
-      className += ' game-card--spectator';
-    }
     
     if (isAnimating && state.selectedCardIndex === index) {
       className += ' game-card--animating-out';
@@ -501,7 +473,7 @@ export function GameBoard({ round }: GameBoardProps) {
       {/* Question modal - no closing by clicking outside, must answer */}
       {showQuestion && selectedQuestion && selectedCard && (
         <div className="question-overlay">
-          <div className={`question-modal question-modal--player${state.currentPlayer} ${spectatorMode ? 'question-modal--spectator' : ''} animate-modal-in`}>
+          <div className={`question-modal question-modal--player${state.currentPlayer} animate-modal-in`}>
             {/* Round 2 intro explaining why this question */}
             {round === 2 && (
               <div className="question-modal__intro" style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
@@ -538,34 +510,25 @@ export function GameBoard({ round }: GameBoardProps) {
                 {selectedQuestion.example}
               </p>
             )}
-            {spectatorMode && (
-              <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '16px' }}>
-                {currentPlayerName} is answering...
-              </p>
-            )}
             <div className="question-modal__options">
               <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer} ${state.selectedAnswer === 'A' ? 'question-modal__option--selected' : ''}`}
+                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
                 onClick={() => handleAnswer('A')}
-                disabled={spectatorMode}
               >
                 <span className="question-modal__option-letter">A</span>
                 <span className="question-modal__option-text">{selectedQuestion.optionA}</span>
               </button>
               <button
-                className={`question-modal__option question-modal__option--player${state.currentPlayer} ${state.selectedAnswer === 'B' ? 'question-modal__option--selected' : ''}`}
+                className={`question-modal__option question-modal__option--player${state.currentPlayer}`}
                 onClick={() => handleAnswer('B')}
-                disabled={spectatorMode}
               >
                 <span className="question-modal__option-letter">B</span>
                 <span className="question-modal__option-text">{selectedQuestion.optionB}</span>
               </button>
             </div>
-            {!spectatorMode && (
-              <p className="question-modal__hint">
-                {currentPlayerName}, tap your answer
-              </p>
-            )}
+            <p className="question-modal__hint">
+              {currentPlayerName}, tap your answer
+            </p>
           </div>
         </div>
       )}

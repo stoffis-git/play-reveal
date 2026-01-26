@@ -68,8 +68,7 @@ type GameAction =
   | { type: 'CANCEL_REMOTE_SESSION' }
   | { type: 'ACCEPT_REMOTE_INVITE' }
   | { type: 'DECLINE_REMOTE_INVITE' }
-  | { type: 'RESET_GAME' }
-  | { type: 'SELECT_ANSWER'; answer: 'A' | 'B'; cardIndex: number };
+  | { type: 'RESET_GAME' };
 
 function createInitialCards(round: 1 | 2, round1Answers?: Answer[]): Card[] {
   const questions = round === 1 ? round1Questions : selectRound2Questions(round1Answers || []);
@@ -148,8 +147,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         round1Cards: createInitialCards(1),
         round1Complete: false,
         round2Complete: false,
-        selectedCardIndex: null,
-        selectedAnswer: null
+        selectedCardIndex: null
       };
 
     case 'CONTINUE_GAME':
@@ -168,8 +166,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       if (action.index < 0) {
         return {
           ...state,
-          selectedCardIndex: null,
-          selectedAnswer: null
+          selectedCardIndex: null
         };
       }
       
@@ -187,19 +184,8 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       
       return {
         ...state,
-        selectedCardIndex: action.index,
-        selectedAnswer: null
+        selectedCardIndex: action.index
       };
-
-    case 'SELECT_ANSWER':
-      // Set selected answer for highlighting (only if card index matches)
-      if (state.selectedCardIndex === action.cardIndex) {
-        return {
-          ...state,
-          selectedAnswer: action.answer
-        };
-      }
-      return state;
 
     case 'ANSWER_QUESTION': {
       if (state.selectedCardIndex === null) return state;
@@ -231,8 +217,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           [isRound1 ? 'round1Cards' : 'round2Cards']: cards,
           currentPlayer: 2,
-          selectedCardIndex: null,
-          selectedAnswer: null
+          selectedCardIndex: null
         };
       } else {
         answer.partner2Answer = action.answer;
@@ -255,8 +240,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           ...state,
           [isRound1 ? 'round1Cards' : 'round2Cards']: cards,
           currentPlayer: 1,
-          selectedCardIndex: null,
-          selectedAnswer: null
+          selectedCardIndex: null
         };
       }
     }
@@ -296,8 +280,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentScreen: 'round2',
         round2Cards: createInitialCards(2, round1Answers),
         currentPlayer: 1,
-        selectedCardIndex: null,
-        selectedAnswer: null
+        selectedCardIndex: null
       };
     }
 
@@ -315,8 +298,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           round1Complete: false,
           round2Complete: false,
           currentPlayer: 1,
-          selectedCardIndex: null,
-          selectedAnswer: null
+          selectedCardIndex: null
         };
       } else {
         // Replay Round 2 - regenerate based on current Round 1 answers
@@ -327,8 +309,7 @@ function gameReducer(state: GameState, action: GameAction): GameState {
           round2Cards: createInitialCards(2, round1Answers),
           round2Complete: false,
           currentPlayer: 1,
-          selectedCardIndex: null,
-          selectedAnswer: null
+          selectedCardIndex: null
         };
       }
     }
@@ -400,10 +381,23 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'ACCEPT_REMOTE_INVITE':
-      // Player 2 explicitly accepts - this will trigger presence send
+      // Player 2 explicitly accepts - start the game immediately!
+      // Player 2 is the lead for starting play mode
+      // Use names from state (should be set from localStorage or synced from Player 1)
+      // If names aren't available, use defaults to allow game to start
+      const p1Name = state.partner1Name || 'Partner 1';
+      const p2Name = state.partner2Name || 'Partner 2';
       return {
         ...state,
-        currentScreen: 'remoteSetup' // Temporary, will navigate to round1 after sync
+        partner1Name: p1Name,
+        partner2Name: p2Name,
+        sessionId: uuidv4(),
+        currentPlayer: 1,
+        currentScreen: 'round1',
+        round1Cards: createInitialCards(1),
+        round1Complete: false,
+        round2Complete: false,
+        selectedCardIndex: null
       };
 
     case 'DECLINE_REMOTE_INVITE':
@@ -476,16 +470,6 @@ export function getQuestionForCard(card: Card) {
   return getQuestionById(card.questionId);
 }
 
-export function isActivePlayer(state: GameState): boolean {
-  if (state.gameMode !== 'remote' || !state.remotePlayerId) return true;
-  return state.currentPlayer === state.remotePlayerId;
-}
-
-export function isSpectatorMode(state: GameState): boolean {
-  if (state.gameMode !== 'remote' || !state.remotePlayerId) return false;
-  return state.currentPlayer !== state.remotePlayerId;
-}
-
 // Context
 interface GameContextType {
   state: GameState;
@@ -548,7 +532,6 @@ function persistState(state: GameState) {
         round2Complete: state.round2Complete,
         hasPaid: state.hasPaid,
         selectedCardIndex: state.selectedCardIndex,
-        selectedAnswer: state.selectedAnswer,
 
         gameMode: state.gameMode,
         remoteSessionId: state.remoteSessionId,
@@ -626,7 +609,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     round1Complete: s.round1Complete,
     round2Complete: s.round2Complete,
     selectedCardIndex: s.selectedCardIndex,
-    selectedAnswer: s.selectedAnswer,
     gameMode: 'remote',
     remoteSessionPaid: true
     // Intentionally do NOT include hasPaid or remotePlayerId (local-only)
@@ -644,7 +626,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
     
     switch (action.type) {
       case 'SELECT_CARD':
-      case 'SELECT_ANSWER':
       case 'ANSWER_QUESTION':
       case 'COMPLETE_ROUND':
       case 'NAVIGATE_TO':
@@ -674,7 +655,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    // Handle ACCEPT_REMOTE_INVITE: Player 2 accepts, send presence after state update
+    // Handle ACCEPT_REMOTE_INVITE: Player 2 accepts, start game and send state to Player 1
     if (action.type === 'ACCEPT_REMOTE_INVITE') {
       const current = stateRef.current;
       if (current.gameMode === 'remote' && current.remotePlayerId === 2 && current.remoteSessionId) {
@@ -685,19 +666,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
           presenceAnnouncedRef.current[key] = true;
         }
         
-        // Dispatch action first to update state
+        // Dispatch action first to update state (this starts the game)
         rawDispatch(action);
+        
+        // Mark that Player 2 should send snapshot after game starts
+        const updatedState = stateRef.current;
+        if (updatedState.round1Cards.length > 0) {
+          // Game was started, mark to send snapshot
+          pendingHostSnapshotRef.current = true;
+        }
         
         // Send presence after state update and connection is ready
         if (shouldSendPresence) {
           // Try to send presence with retries
           const trySendPresence = (attempt = 0) => {
-            const updatedState = stateRef.current;
+            const stateAfterUpdate = stateRef.current;
             if (syncRef.current) {
               // Try to send even if not connected - Supabase will queue it
               void syncRef.current.sendPresence(2);
               // If connected, we're done. If not, retry after a delay
-              if (!updatedState.isRemoteConnected && attempt < 3) {
+              if (!stateAfterUpdate.isRemoteConnected && attempt < 3) {
                 setTimeout(() => trySendPresence(attempt + 1), 200);
               }
             } else if (attempt < 3) {
@@ -785,12 +773,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       onMessage: (msg) => {
         if (msg.type === 'action') {
           const action = msg.payload as GameAction;
-
-          // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
-          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
+          
+          // If Player 1 receives APPLY_REMOTE_STATE with game started by Player 2, navigate to Round 1
+          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 1) {
             const state = action.state as Partial<GameState>;
             if (state.round1Cards && state.round1Cards.length > 0 && state.currentScreen === 'round1') {
-              // Game has started, navigate Player 2 to Round 1
+              // Player 2 started the game, navigate Player 1 to Round 1
               suppressBroadcastRef.current = true;
               try {
                 rawDispatch(action);
@@ -801,7 +789,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
               return;
             }
           }
-
+          
+          // If Player 2 receives APPLY_REMOTE_STATE for round2, navigate to Round 2
+          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
+            const state = action.state as Partial<GameState>;
+            if (state.round2Cards && state.round2Cards.length > 0 && state.currentScreen === 'round2') {
+              // Player 1 started round2, navigate Player 2 to Round 2
+              suppressBroadcastRef.current = true;
+              try {
+                rawDispatch(action);
+                internalDispatch({ type: 'NAVIGATE_TO', screen: 'round2' });
+              } finally {
+                suppressBroadcastRef.current = false;
+              }
+              return;
+            }
+          }
+          
           // Apply actions from the other player without re-broadcasting
           suppressBroadcastRef.current = true;
           try {
@@ -828,27 +832,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         if (msg.type === 'presence') {
-          // If I'm host and player2 joins, start the game and sync snapshot.
+          // Player 2 has joined - mark session as paid
+          // Player 2 will start the game and send state to Player 1
           const current = stateRef.current;
           if (current.remotePlayerId === 1 && msg.payload.player === 2) {
-            // Only start game if not already started
-            if (current.round1Cards.length === 0) {
               internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
-              pendingHostSnapshotRef.current = true;
-              internalDispatch({ type: 'START_GAME', partner1Name: current.partner1Name, partner2Name: current.partner2Name });
-            }
+            // Don't start game here - Player 2 will start it and send state
           }
         }
       }
     });
   }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
 
-  // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
+  // After Player 2 starts game, send a snapshot so both devices have identical card ids.
+  // Also handles Player 1 starting round2.
   useEffect(() => {
     const s = state;
     if (
       s.gameMode !== 'remote' ||
-      s.remotePlayerId !== 1 ||
       !s.remoteSessionId ||
       !s.isRemoteConnected ||
       !pendingHostSnapshotRef.current
@@ -856,9 +857,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // Player 2 starts the game and sends state to Player 1
+    // OR Player 1 starts round2 and sends state to Player 2
+    if (
+      (s.remotePlayerId === 2 && s.round1Cards.length > 0 && s.currentScreen === 'round1') ||
+      (s.remotePlayerId === 1 && s.round2Cards.length > 0 && s.currentScreen === 'round2')
+    ) {
     pendingHostSnapshotRef.current = false;
     void syncRef.current?.sendSessionPaid();
     void syncRef.current?.sendAction({ type: 'APPLY_REMOTE_STATE', state: getShareableState(s) });
+    }
   }, [state]);
 
   // Persist state on every change

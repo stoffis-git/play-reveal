@@ -22,15 +22,21 @@ function GameRouter() {
         return; // Player 1 should NEVER process invite URLs - they're the host!
       }
 
-      // Also check: if we're already Player 2 with a different session, don't process
-      // (This handles edge cases where Player 2 might have multiple tabs)
-      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId !== code) {
-        return; // Already Player 2 in a different session
-      }
-
       // Only process if we're not already Player 2 with this exact session
       if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId === code) {
         return; // Already set up as Player 2 for this session
+      }
+
+      // If we're Player 2 with a different session, only block if the old session is still active
+      // (This handles edge cases where Player 2 might have multiple tabs)
+      // If old session is inactive (not connected and no active game), allow joining new session
+      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId !== code) {
+        // Check if old session is still active
+        const oldSessionActive = state.isRemoteConnected || (state.round1Cards.length > 0 || state.round2Cards.length > 0);
+        if (oldSessionActive) {
+          return; // Already Player 2 in a different ACTIVE session
+        }
+        // Old session is dead, allow joining new session (will clear old session state)
       }
 
       dispatch({ type: 'SELECT_MODE', mode: 'remote' });
