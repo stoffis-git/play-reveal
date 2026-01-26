@@ -23,21 +23,18 @@
     <meta name="twitter:title" content="Reveal - The Game for Couples" />
     <meta name="twitter:description" content="Discover how in-sync you really are. The game for couples & relationships." />
     <meta name="twitter:image" content="https://playreveal.com/reveal_icon.png" />
-    <script type="module" crossorigin src="/assets/index-RR_A-N5s.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BbPvYghQ.css">
+    <script type="module" crossorigin src="/assets/index-D8_3dDDV.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-B4jM9J7P.css">
   </head>
   <body>
     <div id="root"></div>
     <script>
       // Handle GitHub Pages SPA redirect from 404.html
-      // MUST run synchronously before React loads
       (function() {
         const redirect = sessionStorage.getItem('redirect');
         if (redirect) {
           sessionStorage.removeItem('redirect');
-          // Restore path immediately before React loads
-          const url = new URL(redirect, window.location.origin);
-          window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+          window.history.replaceState(null, '', redirect);
         }
       })();
       
