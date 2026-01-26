@@ -582,6 +582,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const syncRef = useRef<SupabaseSync | null>(null);
   const suppressBroadcastRef = useRef(false);
   const pendingHostSnapshotRef = useRef(false);
+  const isConnectedRef = useRef(false); // Track actual connection status
 
   const internalDispatch = (action: GameAction) => {
     suppressBroadcastRef.current = true;
@@ -625,6 +626,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (current.gameMode === 'remote' && current.remotePlayerId === 1 && current.remoteSessionId) {
         // Broadcast cancellation to Player 2 before clearing state
         void syncRef.current?.sendSessionCancelled();
+      }
+    }
+
+    // Handle ACCEPT_REMOTE_INVITE: Player 2 accepts, send presence immediately if connected
+    if (action.type === 'ACCEPT_REMOTE_INVITE') {
+      const current = stateRef.current;
+      if (current.gameMode === 'remote' && current.remotePlayerId === 2 && current.remoteSessionId) {
+        // Use ref to check actual connection status (state might not be updated yet)
+        if (isConnectedRef.current && syncRef.current) {
+          console.log('[Remote Session] Manually sending presence after accept', { playerId: 2 });
+          void syncRef.current.sendPresence(2);
+        } else {
+          console.log('[Remote Session] Cannot send presence yet - not connected', { 
+            isConnected: isConnectedRef.current,
+            hasSync: !!syncRef.current
+          });
+        }
       }
     }
 
@@ -675,6 +693,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
     const sessionId = state.remoteSessionId;
     if (state.gameMode !== 'remote' || !sessionId) {
+      isConnectedRef.current = false;
       internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
       void syncRef.current?.disconnect();
       return;
@@ -694,7 +713,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       sessionId,
       onStatus: (status) => {
         console.log('[Remote Session] Supabase status changed', { status });
-        internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
+        const isConnected = status === 'connected';
+        isConnectedRef.current = isConnected;
+        internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: isConnected });
       },
       onMessage: (msg) => {
         if (msg.type === 'action') {
