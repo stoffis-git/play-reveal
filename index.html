@@ -28,14 +28,11 @@
     <div id="root"></div>
     <script>
       // Handle GitHub Pages SPA redirect from 404.html
-      // MUST run synchronously before React loads
       (function() {
         const redirect = sessionStorage.getItem('redirect');
         if (redirect) {
           sessionStorage.removeItem('redirect');
-          // Restore path immediately before React loads
-          const url = new URL(redirect, window.location.origin);
-          window.history.replaceState(null, '', url.pathname + url.search + url.hash);
+          window.history.replaceState(null, '', redirect);
         }
       })();
       

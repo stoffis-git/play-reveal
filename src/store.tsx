@@ -106,8 +106,7 @@ const initialState: GameState = {
   remoteSessionId: storedRemoteSession.sessionId,
   remotePlayerId: storedRemoteSession.playerId,
   isRemoteConnected: false,
-  remoteSessionPaid: false,
-  selectedAnswer: null
+  remoteSessionPaid: false
 };
 
 function gameReducer(state: GameState, action: GameAction): GameState {
@@ -381,23 +380,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'ACCEPT_REMOTE_INVITE':
-      // Player 2 explicitly accepts - start the game immediately!
-      // Player 2 is the lead for starting play mode
-      // Use names from state (should be set from localStorage or synced from Player 1)
-      // If names aren't available, use defaults to allow game to start
-      const p1Name = state.partner1Name || 'Partner 1';
-      const p2Name = state.partner2Name || 'Partner 2';
+      // Player 2 explicitly accepts - this will trigger presence send
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:384',message:'ACCEPT_REMOTE_INVITE action handler',data:{oldScreen:state.currentScreen,newScreen:'remoteSetup',remotePlayerId:state.remotePlayerId,remoteSessionId:state.remoteSessionId,isRemoteConnected:state.isRemoteConnected},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H2'})}).catch(()=>{});
+      // #endregion
       return {
         ...state,
-        partner1Name: p1Name,
-        partner2Name: p2Name,
-        sessionId: uuidv4(),
-        currentPlayer: 1,
-        currentScreen: 'round1',
-        round1Cards: createInitialCards(1),
-        round1Complete: false,
-        round2Complete: false,
-        selectedCardIndex: null
+        currentScreen: 'remoteSetup' // Temporary, will navigate to round1 after sync
       };
 
     case 'DECLINE_REMOTE_INVITE':
@@ -589,8 +578,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const syncRef = useRef<SupabaseSync | null>(null);
   const suppressBroadcastRef = useRef(false);
   const pendingHostSnapshotRef = useRef(false);
-  const presenceAnnouncedRef = useRef<{ [sessionId: string]: boolean }>({});
-  const connectedSessionRef = useRef<string | null>(null);
 
   const internalDispatch = (action: GameAction) => {
     suppressBroadcastRef.current = true;
@@ -615,15 +602,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
   });
 
   const shouldBroadcast = (action: GameAction): boolean => {
-    // Don't broadcast player-specific navigation actions
-    if (action.type === 'NAVIGATE_TO') {
-      // These screens are player-specific and should NOT be broadcast
-      const playerSpecificScreens: GameScreen[] = ['inviteAcceptance', 'sessionCancelled', 'remoteSetup'];
-      if (playerSpecificScreens.includes(action.screen)) {
-        return false;
-      }
-    }
-    
     switch (action.type) {
       case 'SELECT_CARD':
       case 'ANSWER_QUESTION':
@@ -652,54 +630,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (current.gameMode === 'remote' && current.remotePlayerId === 2 && current.remoteSessionId) {
         // Broadcast decline to Player 1 before clearing state
         void syncRef.current?.sendSessionCancelled();
-      }
-    }
-
-    // Handle ACCEPT_REMOTE_INVITE: Player 2 accepts, start game and send state to Player 1
-    if (action.type === 'ACCEPT_REMOTE_INVITE') {
-      const current = stateRef.current;
-      if (current.gameMode === 'remote' && current.remotePlayerId === 2 && current.remoteSessionId) {
-        const key = `${current.remoteSessionId}-2`;
-        const shouldSendPresence = !presenceAnnouncedRef.current[key];
-        
-        if (shouldSendPresence) {
-          presenceAnnouncedRef.current[key] = true;
-        }
-        
-        // Dispatch action first to update state (this starts the game)
-        rawDispatch(action);
-        
-        // Mark that Player 2 should send snapshot after game starts
-        const updatedState = stateRef.current;
-        if (updatedState.round1Cards.length > 0) {
-          // Game was started, mark to send snapshot
-          pendingHostSnapshotRef.current = true;
-        }
-        
-        // Send presence after state update and connection is ready
-        if (shouldSendPresence) {
-          // Try to send presence with retries
-          const trySendPresence = (attempt = 0) => {
-            const stateAfterUpdate = stateRef.current;
-            if (syncRef.current) {
-              // Try to send even if not connected - Supabase will queue it
-              void syncRef.current.sendPresence(2);
-              // If connected, we're done. If not, retry after a delay
-              if (!stateAfterUpdate.isRemoteConnected && attempt < 3) {
-                setTimeout(() => trySendPresence(attempt + 1), 200);
-              }
-            } else if (attempt < 3) {
-              // syncRef not initialized yet, retry
-              setTimeout(() => trySendPresence(attempt + 1), 200);
-            }
-          };
-          
-          // Start trying after a brief delay to ensure state is updated
-          setTimeout(() => trySendPresence(), 50);
-        }
-        
-        // Don't continue with normal dispatch flow (action already dispatched above)
-        return;
       }
     }
 
@@ -733,72 +663,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   // Connect/disconnect Supabase broadcast channel for remote sessions
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:666',message:'Supabase connection effect executing',data:{gameMode:state.gameMode,remoteSessionId:state.remoteSessionId,remotePlayerId:state.remotePlayerId,currentScreen:state.currentScreen},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
     const sessionId = state.remoteSessionId;
-    const playerId = state.remotePlayerId;
-
     if (state.gameMode !== 'remote' || !sessionId) {
-      connectedSessionRef.current = null;
-      presenceAnnouncedRef.current = {};
       internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: false });
       void syncRef.current?.disconnect();
       return;
     }
 
-    // Skip reconnection if already connected to this session
-    if (connectedSessionRef.current === sessionId) {
-      return;
-    }
-
     if (!syncRef.current) syncRef.current = new SupabaseSync();
+
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:679',message:'Connecting to Supabase',data:{sessionId:sessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
+    // #endregion
 
     void syncRef.current.connect({
       sessionId,
       onStatus: (status) => {
+        // #region agent log
+        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:687',message:'Supabase status changed',data:{status:status},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
+        // #endregion
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: status === 'connected' });
-
-        // When connected, announce presence for Player 1
-        // Player 2's presence is handled in dispatch wrapper when they accept
-        if (status === 'connected') {
-          connectedSessionRef.current = sessionId;
-
-          if (playerId === 1) {
-            const key = `${sessionId}-${playerId}`;
-            if (!presenceAnnouncedRef.current[key]) {
-              presenceAnnouncedRef.current[key] = true;
-              void syncRef.current?.sendPresence(playerId);
-            }
-          }
-        }
       },
       onMessage: (msg) => {
         if (msg.type === 'action') {
           const action = msg.payload as GameAction;
           
-          // If Player 1 receives APPLY_REMOTE_STATE with game started by Player 2, navigate to Round 1
-          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 1) {
+          // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
+          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
             const state = action.state as Partial<GameState>;
             if (state.round1Cards && state.round1Cards.length > 0 && state.currentScreen === 'round1') {
-              // Player 2 started the game, navigate Player 1 to Round 1
+              // Game has started, navigate Player 2 to Round 1
               suppressBroadcastRef.current = true;
               try {
                 rawDispatch(action);
                 internalDispatch({ type: 'NAVIGATE_TO', screen: 'round1' });
-              } finally {
-                suppressBroadcastRef.current = false;
-              }
-              return;
-            }
-          }
-          
-          // If Player 2 receives APPLY_REMOTE_STATE for round2, navigate to Round 2
-          if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {
-            const state = action.state as Partial<GameState>;
-            if (state.round2Cards && state.round2Cards.length > 0 && state.currentScreen === 'round2') {
-              // Player 1 started round2, navigate Player 2 to Round 2
-              suppressBroadcastRef.current = true;
-              try {
-                rawDispatch(action);
-                internalDispatch({ type: 'NAVIGATE_TO', screen: 'round2' });
               } finally {
                 suppressBroadcastRef.current = false;
               }
@@ -832,24 +733,40 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         if (msg.type === 'presence') {
-          // Player 2 has joined - mark session as paid
-          // Player 2 will start the game and send state to Player 1
+          // If I'm host and player2 joins, start the game and sync snapshot.
           const current = stateRef.current;
           if (current.remotePlayerId === 1 && msg.payload.player === 2) {
-              internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
-            // Don't start game here - Player 2 will start it and send state
+            internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
+            pendingHostSnapshotRef.current = true;
+            internalDispatch({ type: 'START_GAME', partner1Name: current.partner1Name, partner2Name: current.partner2Name });
           }
         }
       }
     });
-  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId]);
 
-  // After Player 2 starts game, send a snapshot so both devices have identical card ids.
-  // Also handles Player 1 starting round2.
+    // Announce presence - but ONLY if Player 2 has explicitly accepted
+    const playerId = state.remotePlayerId;
+    const shouldAnnouncePresence = playerId === 1 || 
+      (playerId === 2 && state.currentScreen !== 'inviteAcceptance');
+
+    // #region agent log
+    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:743',message:'Presence effect executing',data:{playerId:playerId,currentScreen:state.currentScreen,shouldAnnouncePresence:shouldAnnouncePresence,isRemoteConnected:state.isRemoteConnected,hasSyncRef:!!syncRef.current,remoteSessionId:state.remoteSessionId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1,H3,H4'})}).catch(()=>{});
+    // #endregion
+
+    if (playerId && shouldAnnouncePresence) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:748',message:'Sending presence',data:{playerId:playerId},timestamp:Date.now(),sessionId:'debug-session',runId:'accept-flow',hypothesisId:'H1'})}).catch(()=>{});
+      // #endregion
+      void syncRef.current.sendPresence(playerId);
+    }
+  }, [state.gameMode, state.remoteSessionId, state.remotePlayerId, state.currentScreen]);
+
+  // After host starts/restarts/starts round2, send a snapshot so both devices have identical card ids.
   useEffect(() => {
     const s = state;
     if (
       s.gameMode !== 'remote' ||
+      s.remotePlayerId !== 1 ||
       !s.remoteSessionId ||
       !s.isRemoteConnected ||
       !pendingHostSnapshotRef.current
@@ -857,16 +774,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // Player 2 starts the game and sends state to Player 1
-    // OR Player 1 starts round2 and sends state to Player 2
-    if (
-      (s.remotePlayerId === 2 && s.round1Cards.length > 0 && s.currentScreen === 'round1') ||
-      (s.remotePlayerId === 1 && s.round2Cards.length > 0 && s.currentScreen === 'round2')
-    ) {
     pendingHostSnapshotRef.current = false;
     void syncRef.current?.sendSessionPaid();
     void syncRef.current?.sendAction({ type: 'APPLY_REMOTE_STATE', state: getShareableState(s) });
-    }
   }, [state]);
 
   // Persist state on every change

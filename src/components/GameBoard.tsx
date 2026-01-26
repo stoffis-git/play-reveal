@@ -44,63 +44,52 @@ export function GameBoard({ round }: GameBoardProps) {
 
   // When card is selected, start animation
   useEffect(() => {
-    if (state.selectedCardIndex !== null) {
-      // Get card position if this is the active player who clicked
-      if (cardPosition) {
-        setIsAnimating(true);
-        // After animation completes, show the question
-        const timer = setTimeout(() => {
-          setShowQuestion(true);
-          setIsAnimating(false);
-        }, 400);
-        return () => clearTimeout(timer);
-      }
-    } else {
-      // Card deselected, hide question
-      setShowQuestion(false);
-      setIsAnimating(false);
+    if (state.selectedCardIndex !== null && cardPosition) {
+      setIsAnimating(true);
+      // After animation completes, show the question
+      const timer = setTimeout(() => {
+        setShowQuestion(true);
+        setIsAnimating(false);
+      }, 400);
+      return () => clearTimeout(timer);
     }
   }, [state.selectedCardIndex, cardPosition]);
 
   // Handle answer selection
   const handleAnswer = (answer: 'A' | 'B') => {
+    setShowQuestion(false);
+    setCardPosition(null);
 
-    // Delay before closing question modal and processing answer
+    // Check if this will reveal the card (both partners will have answered)
+    const selectedCard = state.selectedCardIndex !== null ? cards[state.selectedCardIndex] : null;
+    const willReveal = selectedCard && (
+      (state.currentPlayer === 1 && selectedCard.state === 'partner2Only') ||
+      (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
+    );
+
+    // Delay to show card flip animation
     setTimeout(() => {
-      setShowQuestion(false);
-      setCardPosition(null);
-
-      // Check if this will reveal the card (both partners will have answered)
-      const selectedCard = state.selectedCardIndex !== null ? cards[state.selectedCardIndex] : null;
-      const willReveal = selectedCard && (
-        (state.currentPlayer === 1 && selectedCard.state === 'partner2Only') ||
-        (state.currentPlayer === 2 && selectedCard.state === 'partner1Only')
-      );
-
-      // Delay to show card flip animation
-      setTimeout(() => {
-        if (willReveal && selectedCard) {
-          // Create a copy of the card with the answer for the reveal screen
-          const cardWithAnswer: Card = {
-            ...selectedCard,
-            state: 'revealed',
-            answer: {
-              ...selectedCard.answer,
-              ...(state.currentPlayer === 1 
-                ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
-                : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
-              )
-            }
-          };
-          setRevealedCard(cardWithAnswer);
-        }
-        dispatch({ type: 'ANSWER_QUESTION', answer });
-        // Only show pass device if not showing reveal screen and not remote
-        if (!willReveal && !isRemote) {
-          setShowPassDevice(true);
-        }
-      }, 300);
-    }, 500); // 0.5 second delay
+      if (willReveal && selectedCard) {
+        // Create a copy of the card with the answer for the reveal screen
+        const cardWithAnswer: Card = {
+          ...selectedCard,
+          state: 'revealed',
+          answer: {
+            ...selectedCard.answer,
+            ...(state.currentPlayer === 1 
+              ? { partner1Answer: answer, matched: selectedCard.answer.partner2Answer === answer }
+              : { partner2Answer: answer, matched: selectedCard.answer.partner1Answer === answer }
+            )
+          }
+        };
+        setRevealedCard(cardWithAnswer);
+      }
+      dispatch({ type: 'ANSWER_QUESTION', answer });
+      // Only show pass device if not showing reveal screen
+      if (!willReveal) {
+        setShowPassDevice(true);
+      }
+    }, 300);
   };
 
   // Handle continue from reveal screen
@@ -118,7 +107,6 @@ export function GameBoard({ round }: GameBoardProps) {
 
   const handleCardClick = (index: number) => {
     if (isRemote && !state.isRemoteConnected) return;
-    
     const card = cards[index];
     const cardEl = cardRefs.current[index];
     
@@ -162,7 +150,6 @@ export function GameBoard({ round }: GameBoardProps) {
       className += card.answer.matched ? ' game-card--matched' : ' game-card--different';
       className += ' game-card--disabled';
     }
-    
     
     if (isAnimating && state.selectedCardIndex === index) {
       className += ' game-card--animating-out';
@@ -216,11 +203,11 @@ export function GameBoard({ round }: GameBoardProps) {
     
     // Check payment status
     if (hasPaid) {
-    try {
+      try {
         await recordPayment({ checkoutId: localStorage.getItem('reveal-checkout-id') });
-    } catch {
+      } catch {
         // ignore
-    }
+      }
     }
 
     const ok = hasPaid ? true : await hasRemotePayment();
@@ -280,7 +267,7 @@ export function GameBoard({ round }: GameBoardProps) {
   return (
     <div className="game-container">
       {/* Intro screen - whose turn is it */}
-      {showIntro && !isRemote && (
+      {showIntro && (
         <div className={`intro-screen intro-screen--partner${state.currentPlayer}`}>
           <div className="intro-screen__content">
             <div className="intro-screen__round">
@@ -540,14 +527,11 @@ export function GameBoard({ round }: GameBoardProps) {
           partner1Name={state.partner1Name}
           partner2Name={state.partner2Name}
           onContinue={handleRevealContinue}
-          isRemote={isRemote}
-          isMyTurn={isRemote ? (state.currentPlayer === state.remotePlayerId) : true}
-          nextPlayerName={state.currentPlayer === 1 ? state.partner2Name : state.partner1Name}
         />
       )}
 
       {/* Pass device screen */}
-      {showPassDevice && !isRemote && (
+      {showPassDevice && (
         <div className={`pass-device pass-device--partner${state.currentPlayer}`}>
           <div className="pass-device__icon">📱</div>
           <h2 className="pass-device__text">Pass to</h2>

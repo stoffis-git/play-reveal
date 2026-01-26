@@ -8,47 +8,15 @@ function GameRouter() {
 
   // Handle invite links: /play/{CODE}
   useEffect(() => {
-    // Wait a tick to ensure path restoration from 404.html has completed
-    const checkPath = () => {
-      const path = window.location.pathname;
-      const match = path.match(/^\/play\/([A-Za-z0-9]{4,12})\/?$/);
-      if (!match) return;
-      const code = match[1].toUpperCase();
+    const path = window.location.pathname;
+    const match = path.match(/^\/play\/([A-Za-z0-9]{4,12})\/?$/);
+    if (!match) return;
+    const code = match[1].toUpperCase();
 
-      // CRITICAL: Only process URL routing if we're NOT already Player 1
-      // This prevents Player 1 from seeing the invite screen when Player 2 joins
-      // Even if Player 1 has the same URL open, they should NOT process it
-      if (state.remotePlayerId === 1) {
-        return; // Player 1 should NEVER process invite URLs - they're the host!
-      }
-
-      // Only process if we're not already Player 2 with this exact session
-      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId === code) {
-        return; // Already set up as Player 2 for this session
-      }
-
-      // If we're Player 2 with a different session, only block if the old session is still active
-      // (This handles edge cases where Player 2 might have multiple tabs)
-      // If old session is inactive (not connected and no active game), allow joining new session
-      if (state.gameMode === 'remote' && state.remotePlayerId === 2 && state.remoteSessionId !== code) {
-        // Check if old session is still active
-        const oldSessionActive = state.isRemoteConnected || (state.round1Cards.length > 0 || state.round2Cards.length > 0);
-        if (oldSessionActive) {
-          return; // Already Player 2 in a different ACTIVE session
-        }
-        // Old session is dead, allow joining new session (will clear old session state)
-      }
-
-      dispatch({ type: 'SELECT_MODE', mode: 'remote' });
-      dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
-      dispatch({ type: 'NAVIGATE_TO', screen: 'inviteAcceptance' });
-    };
-
-    // Check immediately and also after a short delay to catch path restoration
-    checkPath();
-    const timeout = setTimeout(checkPath, 100);
-    return () => clearTimeout(timeout);
-  }, [dispatch, state.gameMode, state.remotePlayerId, state.remoteSessionId]);
+    dispatch({ type: 'SELECT_MODE', mode: 'remote' });
+    dispatch({ type: 'SET_REMOTE_SESSION', sessionId: code, playerId: 2 });
+    dispatch({ type: 'NAVIGATE_TO', screen: 'inviteAcceptance' });
+  }, [dispatch]);
 
   // Prevent zoom on screen changes - reset viewport scale
   useEffect(() => {
@@ -116,9 +84,9 @@ function GameRouter() {
       if (purpose === 'remote') {
         dispatch({ type: 'NAVIGATE_TO', screen: 'remoteSetup' });
       } else {
-      // Always show PaymentSuccess screen so users can see the confirmation
-      // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
-      dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
+        // Always show PaymentSuccess screen so users can see the confirmation
+        // PaymentSuccess component will handle auto-navigation to Round 2 after displaying success
+        dispatch({ type: 'NAVIGATE_TO', screen: 'paymentSuccess' });
       }
     }
   }, [dispatch, state.round1Complete]);
@@ -153,6 +121,9 @@ function GameRouter() {
 }
 
 function App() {
+  // #region agent log
+  fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'App.tsx:121',message:'App component rendering',data:{pathname:window.location.pathname},timestamp:Date.now(),sessionId:'debug-session',runId:'initial',hypothesisId:'H3,H5'})}).catch(()=>{});
+  // #endregion
   return (
     <GameProvider>
       <RemoteSessionOverlay />
