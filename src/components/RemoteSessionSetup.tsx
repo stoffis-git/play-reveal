@@ -227,7 +227,7 @@ export function RemoteSessionSetup() {
                       fontWeight: 500
                     }}
                   >
-                    Waiting for {state.partner2Name || 'partner'} to join…
+                    …waiting for {state.partner2Name || 'partner'}
                   </span>
                 )}
               </div>
