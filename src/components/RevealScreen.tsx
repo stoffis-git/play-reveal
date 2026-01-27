@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Card } from '../types';
 import { getQuestionById } from '../questions';
 import { getInsightForQuestion } from '../insights';
@@ -11,15 +11,36 @@ interface RevealScreenProps {
   isRemote?: boolean;
   isMyTurn?: boolean;
   nextPlayerName?: string;
+  revealConfirmedBy?: { partner1: boolean; partner2: boolean } | null;
+  onConfirm?: () => void;
+  remotePlayerId?: 1 | 2 | null;
 }
 
-export function RevealScreen({ card, partner1Name, partner2Name, onContinue, isRemote = false, isMyTurn = true, nextPlayerName = '' }: RevealScreenProps) {
+export function RevealScreen({ card, partner1Name, partner2Name, onContinue, isRemote = false, isMyTurn = true, nextPlayerName = '', revealConfirmedBy = null, onConfirm, remotePlayerId = null }: RevealScreenProps) {
   const [showDeepDive, setShowDeepDive] = useState(false);
   const question = getQuestionById(card.questionId);
   if (!question) return null;
 
   const isMatch = card.answer.matched;
   const insight = getInsightForQuestion(card.questionId, card.answer.theme);
+
+  // Auto-continue when both players have confirmed (remote mode only)
+  useEffect(() => {
+    if (isRemote && revealConfirmedBy && revealConfirmedBy.partner1 && revealConfirmedBy.partner2) {
+      // Small delay to ensure both players see the confirmation state
+      const timer = setTimeout(() => {
+        onContinue();
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [revealConfirmedBy, isRemote, onContinue]);
+
+  // Determine button state for remote mode
+  const hasCurrentPlayerConfirmed = remotePlayerId === 1 
+    ? (revealConfirmedBy?.partner1 ?? false)
+    : (revealConfirmedBy?.partner2 ?? false);
+  
+  const otherPlayerName = remotePlayerId === 1 ? partner2Name : partner1Name;
 
   const partner1Answer = card.answer.partner1Answer === 'A' ? question.optionA : question.optionB;
   const partner2Answer = card.answer.partner2Answer === 'A' ? question.optionA : question.optionB;
@@ -120,13 +141,28 @@ export function RevealScreen({ card, partner1Name, partner2Name, onContinue, isR
           </>
         )}
 
-        {isRemote && !isMyTurn ? (
+        {isRemote && revealConfirmedBy ? (
+          // Remote mode with confirmation tracking
+          hasCurrentPlayerConfirmed ? (
+            // Current player has confirmed, waiting for other player
+            <button className="btn btn--primary btn--full reveal-screen__btn" disabled>
+              Waiting for {otherPlayerName} to continue...
+            </button>
+          ) : (
+            // Current player hasn't confirmed yet
+            <button className="btn btn--primary btn--full reveal-screen__btn" onClick={onConfirm}>
+              Continue
+            </button>
+          )
+        ) : isRemote && !isMyTurn ? (
+          // Legacy waiting state (shouldn't happen with new confirmation logic, but keeping for safety)
           <div className="reveal-screen__waiting reveal-screen--waiting">
             <p style={{ textAlign: 'center', color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>
               Waiting for {nextPlayerName} to continue...
             </p>
           </div>
         ) : (
+          // Local mode or no confirmation needed
           <button className="btn btn--primary btn--full reveal-screen__btn" onClick={onContinue}>
             Continue
           </button>

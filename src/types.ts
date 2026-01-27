@@ -64,6 +64,7 @@ export interface GameState {
   hasPaid: boolean;
   selectedCardIndex: number | null;
   selectedAnswer: 'A' | 'B' | null;
+  revealConfirmedBy: { partner1: boolean; partner2: boolean } | null;
 
   // Remote mode
   gameMode: 'local' | 'remote';

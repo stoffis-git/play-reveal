@@ -99,6 +99,9 @@ export function GameBoard({ round }: GameBoardProps) {
   const handleAnswer = (answer: 'A' | 'B') => {
     // Broadcast SELECT_ANSWER immediately for spectator highlight
     if (isRemote && state.selectedCardIndex !== null) {
+      // #region agent log
+      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameBoard.tsx:102',message:'Dispatching SELECT_ANSWER',data:{answer,selectedCardIndex:state.selectedCardIndex,isRemote,activePlayer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       dispatch({ type: 'SELECT_ANSWER', answer, cardIndex: state.selectedCardIndex });
     }
 
@@ -609,6 +612,12 @@ export function GameBoard({ round }: GameBoardProps) {
                 </>
               ) : (
                 <>
+                  {/* #region agent log */}
+                  {(() => {
+                    fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'GameBoard.tsx:613',message:'Spectator rendering options with selectedAnswer',data:{selectedAnswer:state.selectedAnswer,currentPlayer:state.currentPlayer,isRemote,activePlayer},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+                    return null;
+                  })()}
+                  {/* #endregion */}
                   <div
                     className={`question-modal__option question-modal__option--player${state.currentPlayer} ${state.selectedAnswer === 'A' ? 'question-modal__option--selected' : ''}`}
                   >

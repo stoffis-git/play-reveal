@@ -1694,6 +1694,13 @@ h3 {
   margin-top: 4px;
 }
 
+.reveal-screen__btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+}
+
 /* Spectator Mode Styles */
 .game-card--spectator {
   cursor: not-allowed;
