@@ -744,6 +744,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
     ) {
       // #region agent log
       if (action.type === 'SELECT_ANSWER') {
+        console.log('[Remote Session][Debug] SELECT_ANSWER not broadcast (gated)', {
+          remotePlayerId: s.remotePlayerId,
+          suppressBroadcast: suppressBroadcastRef.current,
+          gameMode: s.gameMode,
+          hasRemoteSessionId: !!s.remoteSessionId,
+          isConnectedRef: isConnectedRef.current
+        });
         fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:early_return',message:'SELECT_ANSWER not broadcast (gated)',data:{suppressBroadcast:suppressBroadcastRef.current,gameMode:s.gameMode,hasRemoteSessionId:!!s.remoteSessionId,remoteSessionId:s.remoteSessionId ? 'set' : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
       }
       // #endregion
@@ -753,6 +760,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
     // Broadcast action to the other player
     // #region agent log
     if (action.type === 'SELECT_ANSWER') {
+      console.log('[Remote Session][Debug] Broadcasting SELECT_ANSWER', {
+        remotePlayerId: s.remotePlayerId,
+        isConnectedRef: isConnectedRef.current
+      });
       fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:sendAction',message:'Broadcasting SELECT_ANSWER via SupabaseSync.sendAction',data:{remoteSessionId:s.remoteSessionId ? 'set' : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     }
     // #endregion
