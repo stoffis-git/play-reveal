@@ -61,9 +61,18 @@ export function GameBoard({ round }: GameBoardProps) {
         setShowQuestion(true);
       }
     } else {
-      setShowQuestion(false);
+      // When selectedCardIndex becomes null, delay closing for spectator to see highlight
+      if (isRemote && !activePlayer && state.selectedAnswer !== null) {
+        // Keep modal open for 1 second to show highlight, then close
+        const timer = setTimeout(() => {
+          setShowQuestion(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+      } else {
+        setShowQuestion(false);
+      }
     }
-  }, [state.selectedCardIndex, cardPosition, isRemote, activePlayer]);
+  }, [state.selectedCardIndex, cardPosition, isRemote, activePlayer, state.selectedAnswer]);
 
   // Show remote intro screen when entering round 1 in remote mode or when turn changes
   useEffect(() => {
@@ -634,6 +643,9 @@ export function GameBoard({ round }: GameBoardProps) {
           isRemote={isRemote}
           isMyTurn={isRemote ? (state.currentPlayer === state.remotePlayerId) : true}
           nextPlayerName={state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
+          revealConfirmedBy={state.revealConfirmedBy}
+          onConfirm={() => dispatch({ type: 'CONFIRM_REVEAL' })}
+          remotePlayerId={state.remotePlayerId}
         />
       )}
 
