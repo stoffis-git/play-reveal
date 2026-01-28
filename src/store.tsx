@@ -198,9 +198,6 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'SELECT_ANSWER':
       // Set selected answer for immediate highlight sync (before delay)
-      // #region agent log
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:203',message:'SELECT_ANSWER reducer setting selectedAnswer',data:{answer:action.answer,currentPlayer:state.currentPlayer,gameMode:state.gameMode},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
-      // #endregion
       return {
         ...state,
         selectedAnswer: action.answer
@@ -654,25 +651,16 @@ export function GameProvider({ children }: { children: ReactNode }) {
   });
 
   const shouldBroadcast = (action: GameAction): boolean => {
-    const should = (() => {
-      switch (action.type) {
-        case 'SELECT_CARD':
-        case 'SELECT_ANSWER':
-        case 'ANSWER_QUESTION':
-        case 'COMPLETE_ROUND':
-          // Removed NAVIGATE_TO - navigation should be local only
-          // Removed APPLY_REMOTE_STATE - this is sent explicitly via sendAction, not broadcast
-          return true;
-        default:
-          return false;
-      }
-    })();
-    // #region agent log
-    if (action.type === 'SELECT_ANSWER') {
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:654',message:'shouldBroadcast check for SELECT_ANSWER',data:{actionType:action.type,shouldBroadcast:should},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    switch (action.type) {
+      case 'SELECT_CARD':
+      case 'ANSWER_QUESTION':
+      case 'COMPLETE_ROUND':
+        // Removed NAVIGATE_TO - navigation should be local only
+        // Removed APPLY_REMOTE_STATE - this is sent explicitly via sendAction, not broadcast
+        return true;
+      default:
+        return false;
     }
-    // #endregion
-    return should;
   };
 
   const dispatch: React.Dispatch<GameAction> = (action) => {
@@ -742,44 +730,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       !s.remoteSessionId ||
       !shouldBroadcast(action)
     ) {
-      // #region agent log
-      if (action.type === 'SELECT_ANSWER') {
-        console.log('[Remote Session][Debug] SELECT_ANSWER not broadcast (gated)', {
-          remotePlayerId: s.remotePlayerId,
-          suppressBroadcast: suppressBroadcastRef.current,
-          gameMode: s.gameMode,
-          hasRemoteSessionId: !!s.remoteSessionId,
-          isConnectedRef: isConnectedRef.current
-        });
-        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:early_return',message:'SELECT_ANSWER not broadcast (gated)',data:{suppressBroadcast:suppressBroadcastRef.current,gameMode:s.gameMode,hasRemoteSessionId:!!s.remoteSessionId,remoteSessionId:s.remoteSessionId ? 'set' : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      }
-      // #endregion
       return;
     }
 
     // Broadcast action to the other player
-    // #region agent log
-    if (action.type === 'SELECT_ANSWER') {
-      console.log('[Remote Session][Debug] Broadcasting SELECT_ANSWER', {
-        remotePlayerId: s.remotePlayerId,
-        isConnectedRef: isConnectedRef.current
-      });
-      fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:sendAction',message:'Broadcasting SELECT_ANSWER via SupabaseSync.sendAction',data:{remoteSessionId:s.remoteSessionId ? 'set' : null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-    }
-    // #endregion
-    void syncRef.current?.sendAction(action).then((res) => {
-      // #region agent log
-      if (action.type === 'SELECT_ANSWER') {
-        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:sendAction:result',message:'SupabaseSync.sendAction result for SELECT_ANSWER',data:{result:res ?? null},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      }
-      // #endregion
-    }).catch(() => {
-      // #region agent log
-      if (action.type === 'SELECT_ANSWER') {
-        fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:dispatch:sendAction:error',message:'SupabaseSync.sendAction threw for SELECT_ANSWER',data:{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
-      }
-      // #endregion
-    });
+    void syncRef.current?.sendAction(action);
   };
 
   // Connect/disconnect Supabase broadcast channel for remote sessions
@@ -829,11 +784,6 @@ export function GameProvider({ children }: { children: ReactNode }) {
             actionType: action.type,
             playerId: stateRef.current.remotePlayerId
           });
-          // #region agent log
-          if (action.type === 'SELECT_ANSWER') {
-            fetch('http://127.0.0.1:7243/ingest/70a608db-0513-429e-8b7a-f975f3d1a514',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'store.tsx:787',message:'Spectator received SELECT_ANSWER',data:{answer:(action as any).answer,playerId:stateRef.current.remotePlayerId},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-          }
-          // #endregion
           
           // If Player 2 receives APPLY_REMOTE_STATE with game started, navigate to Round 1
           if (action.type === 'APPLY_REMOTE_STATE' && stateRef.current.remotePlayerId === 2) {

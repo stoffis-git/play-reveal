@@ -16,3 +16,4 @@ create table if not exists public.payments (
 create index if not exists payments_game_mode_idx on public.payments (game_mode);
 
 
+
