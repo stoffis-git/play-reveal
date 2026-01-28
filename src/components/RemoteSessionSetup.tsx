@@ -146,21 +146,25 @@ export function RemoteSessionSetup() {
               boxShadow: 'var(--card-shadow)'
             }}>
               <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                SESSION CODE
+                SESSION LINK
               </div>
-              <div style={{ 
-                fontSize: '2rem', 
-                fontWeight: 800, 
-                color: 'var(--partner1)', 
-                letterSpacing: '2px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '12px',
-                marginBottom: '16px'
-              }}>
-                {state.remoteSessionId}
-                {shareUrl && (
+              {shareUrl && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                  <input
+                    type="text"
+                    value={shareUrl}
+                    readOnly
+                    style={{
+                      flex: 1,
+                      padding: '10px 12px',
+                      borderRadius: '10px',
+                      border: '1px solid var(--border-color)',
+                      fontSize: '0.9rem',
+                      color: 'var(--text-primary)',
+                      background: 'var(--bg-secondary)'
+                    }}
+                    onFocus={(e) => e.currentTarget.select()}
+                  />
                   <button
                     onClick={handleCopyLink}
                     style={{
@@ -193,8 +197,8 @@ export function RemoteSessionSetup() {
                       </svg>
                     )}
                   </button>
-                )}
-              </div>
+                </div>
+              )}
 
               {shareUrl && (
                 <button 
@@ -218,18 +222,14 @@ export function RemoteSessionSetup() {
                 alignItems: 'center',
                 justifyContent: 'center'
               }}>
-                {state.isRemoteConnected ? (
-                  <span style={{ color: 'var(--match-green)', fontWeight: 700 }}>Connected</span>
-                ) : (
-                  <span 
-                    style={{ 
-                      animation: 'pulse 2s ease-in-out infinite',
-                      fontWeight: 500
-                    }}
-                  >
-                    …waiting for {state.partner2Name || 'partner'}
-                  </span>
-                )}
+                <span 
+                  style={{ 
+                    animation: 'pulse 2s ease-in-out infinite',
+                    fontWeight: 500
+                  }}
+                >
+                  Waiting for {state.partner2Name || 'your partner'}
+                </span>
               </div>
             )}
 
@@ -303,16 +303,6 @@ export function RemoteSessionSetup() {
                     Back
                   </button>
                 </div>
-                <p style={{ 
-                  fontSize: '0.75rem', 
-                  color: 'var(--text-muted)', 
-                  textAlign: 'center',
-                  marginTop: '8px',
-                  maxWidth: '420px',
-                  margin: '8px auto 0'
-                }}>
-                  Your invitation stays active
-                </p>
               </>
             )}
           </>

@@ -204,7 +204,7 @@ export function LandingPage() {
             <input
               type="text"
               className="input"
-              placeholder="Enter first name"
+              placeholder="Enter name"
               value={partner1Name}
               onChange={(e) => {
                 setPartner1Name(e.target.value);
@@ -218,7 +218,7 @@ export function LandingPage() {
             <input
               type="text"
               className="input"
-              placeholder="Enter first name"
+              placeholder="Enter name"
               value={partner2Name}
               onChange={(e) => {
                 setPartner2Name(e.target.value);
