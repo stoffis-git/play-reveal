@@ -30,6 +30,7 @@ export function GameBoard({ round }: GameBoardProps) {
   const [showIntro, setShowIntro] = useState(true); // Show "whose turn" intro
   const [showRemoteIntro, setShowRemoteIntro] = useState(false); // Show remote mode intro
   const lastPlayerRef = useRef<number | null>(null); // Track last player to detect turn changes
+  const prevCardsRef = useRef<Card[] | null>(null); // Track previous cards state to detect reveals
   const [showPassDevice, setShowPassDevice] = useState(false);
   const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
@@ -74,9 +75,34 @@ export function GameBoard({ round }: GameBoardProps) {
     }
   }, [state.selectedCardIndex, cardPosition, isRemote, activePlayer, state.selectedAnswer]);
 
+  // Detect when a card becomes revealed via sync (for spectator to see RevealScreen)
+  useEffect(() => {
+    if (isRemote && prevCardsRef.current && !revealedCard) {
+      // Check if any card just became revealed
+      const newlyRevealedCard = cards.find((card, index) => {
+        const prevCard = prevCardsRef.current?.[index];
+        return prevCard && prevCard.state !== 'revealed' && card.state === 'revealed';
+      });
+      
+      if (newlyRevealedCard) {
+        setRevealedCard(newlyRevealedCard);
+      }
+    }
+    prevCardsRef.current = cards.map(c => ({ ...c })); // Make a copy to detect changes
+  }, [cards, isRemote, revealedCard]);
+
   // Show remote intro screen when entering round 1 in remote mode or when turn changes
+  // BUT NOT when a reveal is pending/showing
   useEffect(() => {
     if (isRemote && state.currentScreen === 'round1' && cards.length > 0) {
+      // Don't show intro if a reveal is pending or showing
+      if (revealedCard || state.revealConfirmedBy) {
+        setShowRemoteIntro(false);
+        // Update lastPlayerRef so we don't show intro after reveal closes
+        lastPlayerRef.current = state.currentPlayer;
+        return;
+      }
+      
       // Show on initial entry (no cards revealed) or when turn changes
       const hasRevealedCards = cards.some(c => c.state === 'revealed');
       const turnChanged = lastPlayerRef.current !== null && lastPlayerRef.current !== state.currentPlayer;
@@ -93,7 +119,7 @@ export function GameBoard({ round }: GameBoardProps) {
     } else {
       setShowRemoteIntro(false);
     }
-  }, [isRemote, round, state.currentScreen, cards, state.currentPlayer]);
+  }, [isRemote, round, state.currentScreen, cards, state.currentPlayer, revealedCard, state.revealConfirmedBy]);
 
   // Handle answer selection
   const handleAnswer = (answer: 'A' | 'B') => {
@@ -142,13 +168,16 @@ export function GameBoard({ round }: GameBoardProps) {
 
   // Handle continue from reveal screen
   const handleRevealContinue = () => {
+    // Clear reveal confirmation state
+    dispatch({ type: 'CLEAR_REVEAL_CONFIRMATION' });
     setRevealedCard(null);
     
     // Check if all cards are now revealed (round complete)
     const allRevealed = cards.every(c => c.state === 'revealed');
     if (allRevealed) {
       dispatch({ type: 'COMPLETE_ROUND', round });
-    } else {
+    } else if (!isRemote) {
+      // Only show pass device in local mode
       setShowPassDevice(true);
     }
   };
