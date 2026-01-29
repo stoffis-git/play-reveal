@@ -436,6 +436,27 @@ function gameReducer(state: GameState, action: GameAction): GameState {
         currentScreen: 'landing'
       };
 
+    case 'CONFIRM_REVEAL': {
+      // Mark the confirming player (based on remotePlayerId) as confirmed
+      const currentConfirmed = state.revealConfirmedBy || { partner1: false, partner2: false };
+      // In remote mode, use remotePlayerId to determine who's confirming
+      // In local mode, use currentPlayer (though dual confirm is primarily for remote)
+      const confirmingPlayer = state.remotePlayerId || state.currentPlayer;
+      return {
+        ...state,
+        revealConfirmedBy: {
+          ...currentConfirmed,
+          [confirmingPlayer === 1 ? 'partner1' : 'partner2']: true
+        }
+      };
+    }
+
+    case 'CLEAR_REVEAL_CONFIRMATION':
+      return {
+        ...state,
+        revealConfirmedBy: null
+      };
+
     default:
       return state;
   }
@@ -653,7 +674,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const shouldBroadcast = (action: GameAction): boolean => {
     switch (action.type) {
       case 'SELECT_CARD':
+      case 'SELECT_ANSWER':
       case 'ANSWER_QUESTION':
+      case 'CONFIRM_REVEAL':
       case 'COMPLETE_ROUND':
         // Removed NAVIGATE_TO - navigation should be local only
         // Removed APPLY_REMOTE_STATE - this is sent explicitly via sendAction, not broadcast

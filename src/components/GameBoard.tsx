@@ -64,10 +64,10 @@ export function GameBoard({ round }: GameBoardProps) {
     } else {
       // When selectedCardIndex becomes null, delay closing for spectator to see highlight
       if (isRemote && !activePlayer && state.selectedAnswer !== null) {
-        // Keep modal open for 1 second to show highlight, then close
+        // Keep modal open for 1.5 seconds to show highlight, then close
         const timer = setTimeout(() => {
           setShowQuestion(false);
-        }, 1000);
+        }, 1500);
         return () => clearTimeout(timer);
       } else {
         setShowQuestion(false);
