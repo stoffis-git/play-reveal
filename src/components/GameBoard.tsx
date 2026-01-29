@@ -673,7 +673,7 @@ export function GameBoard({ round }: GameBoardProps) {
           isMyTurn={isRemote ? (state.currentPlayer === state.remotePlayerId) : true}
           nextPlayerName={state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
           revealConfirmedBy={state.revealConfirmedBy}
-          onConfirm={() => dispatch({ type: 'CONFIRM_REVEAL' })}
+          onConfirm={() => dispatch({ type: 'CONFIRM_REVEAL', playerId: state.remotePlayerId || state.currentPlayer })}
           remotePlayerId={state.remotePlayerId}
         />
       )}

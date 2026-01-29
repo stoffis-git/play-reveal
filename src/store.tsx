@@ -69,7 +69,7 @@ type GameAction =
   | { type: 'CANCEL_REMOTE_SESSION' }
   | { type: 'ACCEPT_REMOTE_INVITE' }
   | { type: 'DECLINE_REMOTE_INVITE' }
-  | { type: 'CONFIRM_REVEAL' }
+  | { type: 'CONFIRM_REVEAL'; playerId: 1 | 2 }
   | { type: 'CLEAR_REVEAL_CONFIRMATION' }
   | { type: 'RESET_GAME' };
 
@@ -437,16 +437,13 @@ function gameReducer(state: GameState, action: GameAction): GameState {
       };
 
     case 'CONFIRM_REVEAL': {
-      // Mark the confirming player (based on remotePlayerId) as confirmed
+      // Mark the specified player as confirmed (playerId comes from the action)
       const currentConfirmed = state.revealConfirmedBy || { partner1: false, partner2: false };
-      // In remote mode, use remotePlayerId to determine who's confirming
-      // In local mode, use currentPlayer (though dual confirm is primarily for remote)
-      const confirmingPlayer = state.remotePlayerId || state.currentPlayer;
       return {
         ...state,
         revealConfirmedBy: {
           ...currentConfirmed,
-          [confirmingPlayer === 1 ? 'partner1' : 'partner2']: true
+          [action.playerId === 1 ? 'partner1' : 'partner2']: true
         }
       };
     }
