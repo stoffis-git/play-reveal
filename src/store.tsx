@@ -674,7 +674,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       case 'SELECT_ANSWER':
       case 'ANSWER_QUESTION':
       case 'CONFIRM_REVEAL':
+      case 'CLEAR_REVEAL_CONFIRMATION':
       case 'COMPLETE_ROUND':
+      case 'START_ROUND_2':
         // Removed NAVIGATE_TO - navigation should be local only
         // Removed APPLY_REMOTE_STATE - this is sent explicitly via sendAction, not broadcast
         return true;

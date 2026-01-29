@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard, getScoreTier } from '../store';
 import { Menu } from './Menu';
 import { themeColors } from '../types';
@@ -6,6 +7,23 @@ import { recordPayment } from '../services/paymentTracking';
 
 export function Round1Results() {
   const { state, dispatch } = useGame();
+  const [hasConfirmed, setHasConfirmed] = useState(false);
+  
+  const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
+  const isPaid = state.hasPaid || state.remoteSessionPaid;
+  
+  // For remote mode: detect when both have confirmed via revealConfirmedBy
+  useEffect(() => {
+    if (isRemote && isPaid && state.revealConfirmedBy?.partner1 && state.revealConfirmedBy?.partner2) {
+      // Both confirmed - start Round 2 (only Player 1 dispatches to avoid duplicate)
+      if (state.remotePlayerId === 1) {
+        const timer = setTimeout(() => {
+          dispatch({ type: 'START_ROUND_2' });
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [state.revealConfirmedBy, isRemote, isPaid, state.remotePlayerId, dispatch]);
 
   // Handle case where user accesses this screen without playing Round 1
   // (e.g., from landing page test button)
@@ -83,11 +101,13 @@ export function Round1Results() {
   };
 
   const handleStartRound2 = () => {
-    // In remote mode, only the host should generate Round 2 cards (UUIDs) and then sync a snapshot.
-    if (state.gameMode === 'remote' && state.remotePlayerId !== 1) {
-      alert('Waiting for your partner to start Round 2.');
+    if (isRemote) {
+      // In remote mode, use dual confirmation
+      setHasConfirmed(true);
+      dispatch({ type: 'CONFIRM_REVEAL', playerId: state.remotePlayerId || 1 });
       return;
     }
+    // Local mode - start immediately
     dispatch({ type: 'START_ROUND_2' });
   };
 
@@ -385,19 +405,43 @@ export function Round1Results() {
       {(state.hasPaid || state.remoteSessionPaid) ? (
         // User has already paid - show direct Round 2 button
         <>
-          <button
-            className="btn btn--accent btn--full"
-            onClick={handleStartRound2}
-            style={{ marginBottom: '12px' }}
-          >
-            🚀 Start Round 2
-          </button>
-          <button
-            className="btn btn--ghost"
-            onClick={handleMaybeLater}
-          >
-            Maybe Later
-          </button>
+          {isRemote ? (
+            // Remote mode - dual confirmation
+            hasConfirmed || (state.remotePlayerId === 1 ? state.revealConfirmedBy?.partner1 : state.revealConfirmedBy?.partner2) ? (
+              <button
+                className="btn btn--accent btn--full"
+                disabled
+                style={{ marginBottom: '12px' }}
+              >
+                Waiting for {state.remotePlayerId === 1 ? state.partner2Name : state.partner1Name} to continue...
+              </button>
+            ) : (
+              <button
+                className="btn btn--accent btn--full"
+                onClick={handleStartRound2}
+                style={{ marginBottom: '12px' }}
+              >
+                🚀 Continue to Round 2
+              </button>
+            )
+          ) : (
+            // Local mode - single button
+            <button
+              className="btn btn--accent btn--full"
+              onClick={handleStartRound2}
+              style={{ marginBottom: '12px' }}
+            >
+              🚀 Start Round 2
+            </button>
+          )}
+          {!isRemote && (
+            <button
+              className="btn btn--ghost"
+              onClick={handleMaybeLater}
+            >
+              Maybe Later
+            </button>
+          )}
         </>
       ) : (
         // User hasn't paid - show payment options
