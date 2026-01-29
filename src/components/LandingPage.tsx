@@ -241,6 +241,23 @@ export function LandingPage() {
               >
                 {hasProgress ? '→ Continue Playing' : 'Play in Person'}
               </button>
+              {!hasProgress && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-6px',
+                  right: '-6px',
+                  background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  fontWeight: '700',
+                  padding: '3px 8px',
+                  borderRadius: '10px',
+                  letterSpacing: '0.5px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
+                }}>
+                  FREE
+                </span>
+              )}
             </div>
             {!hasProgress && (
               <div style={{ position: 'relative' }}>
@@ -251,21 +268,6 @@ export function LandingPage() {
                 >
                   Play Remotely
                 </button>
-                <span style={{
-                  position: 'absolute',
-                  top: '-6px',
-                  right: '-6px',
-                  background: 'linear-gradient(135deg, var(--partner1) 0%, var(--partner2) 100%)',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                  fontWeight: '700',
-                  padding: '3px 8px',
-                  borderRadius: '10px',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)'
-                }}>
-                  PREMIUM
-                </span>
               </div>
             )}
           </div>
