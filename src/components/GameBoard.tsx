@@ -45,6 +45,12 @@ export function GameBoard({ round }: GameBoardProps) {
   const activePlayer = isActivePlayer(state);
   const matchCount = getMatchCount(cards);
   const revealedCount = cards.filter(c => c.state === 'revealed').length;
+  
+  // Ref to track current state for use in callbacks (avoids stale closure issues)
+  const stateRef = useRef(state);
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   // When card is selected, start animation
   useEffect(() => {
@@ -172,11 +178,14 @@ export function GameBoard({ round }: GameBoardProps) {
     dispatch({ type: 'CLEAR_REVEAL_CONFIRMATION' });
     setRevealedCard(null);
     
-    // Check if all cards are now revealed (round complete)
-    const allRevealed = cards.every(c => c.state === 'revealed');
+    // Use ref to get CURRENT state (avoids stale closure)
+    const currentState = stateRef.current;
+    const currentCards = round === 1 ? currentState.round1Cards : currentState.round2Cards;
+    const allRevealed = currentCards.every(c => c.state === 'revealed');
+    
     if (allRevealed) {
       dispatch({ type: 'COMPLETE_ROUND', round });
-    } else if (!isRemote) {
+    } else if (currentState.gameMode !== 'remote') {
       // Only show pass device in local mode
       setShowPassDevice(true);
     }
@@ -420,19 +429,6 @@ export function GameBoard({ round }: GameBoardProps) {
             {currentPlayerName.toUpperCase()}'S TURN
           </div>
         </div>
-        {isRemote && (
-          <span style={{
-            background: 'rgba(0,0,0,0.06)',
-            color: 'var(--text-secondary)',
-            padding: '4px 10px',
-            borderRadius: '100px',
-            fontSize: '0.625rem',
-            fontWeight: '700',
-            letterSpacing: '1px'
-          }}>
-            🌐 REMOTE
-          </span>
-        )}
         <div className="progress-counter-header">
           {revealedCount}/15
         </div>

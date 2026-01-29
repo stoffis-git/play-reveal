@@ -214,17 +214,27 @@ export function RemoteSessionSetup() {
             {/* Only show waiting message after link is copied or sent */}
             {hasShared && (
               <div style={{ 
-                color: 'var(--text-secondary)', 
+                color: '#F97316', 
                 fontSize: '1.1rem', 
                 marginTop: '16px',
                 minHeight: '28px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                gap: '8px'
               }}>
                 <span 
                   style={{ 
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: '#F97316',
                     animation: 'pulse 2s ease-in-out infinite',
+                    display: 'inline-block'
+                  }}
+                />
+                <span 
+                  style={{ 
                     fontWeight: 500
                   }}
                 >
