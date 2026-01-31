@@ -137,82 +137,85 @@ export function RemoteSessionSetup() {
 
         {state.remoteSessionId && (
           <>
-            <div style={{
-              background: 'white',
-              borderRadius: '16px',
-              padding: '18px',
-              maxWidth: '420px',
-              margin: '0 auto 16px',
-              boxShadow: 'var(--card-shadow)'
-            }}>
-              <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
-                SESSION LINK
-              </div>
-              {shareUrl && (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                  <input
-                    type="text"
-                    value={shareUrl}
-                    readOnly
-                    style={{
-                      flex: 1,
-                      padding: '10px 12px',
-                      borderRadius: '10px',
-                      border: '1px solid var(--border-color)',
-                      fontSize: '0.9rem',
-                      color: 'var(--text-primary)',
-                      background: 'var(--bg-secondary)'
-                    }}
-                    onFocus={(e) => e.currentTarget.select()}
-                  />
-                  <button
-                    onClick={handleCopyLink}
-                    style={{
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer',
-                      padding: '4px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--text-secondary)',
-                      transition: 'color 0.2s, transform 0.2s'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = 'var(--partner1)';
-                      e.currentTarget.style.transform = 'scale(1.1)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = 'var(--text-secondary)';
-                      e.currentTarget.style.transform = 'scale(1)';
-                    }}
-                    title={copied ? 'Copied!' : 'Copy link'}
-                  >
-                    {copied ? (
-                      <span style={{ fontSize: '1.2rem' }}>✓</span>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                      </svg>
-                    )}
-                  </button>
+            {/* Host UI - show session link and invite controls */}
+            {!isJoiner && (
+              <div style={{
+                background: 'white',
+                borderRadius: '16px',
+                padding: '18px',
+                maxWidth: '420px',
+                margin: '0 auto 16px',
+                boxShadow: 'var(--card-shadow)'
+              }}>
+                <div style={{ fontSize: '0.75rem', letterSpacing: '1px', fontWeight: 700, color: 'var(--text-secondary)', marginBottom: '6px' }}>
+                  SESSION LINK
                 </div>
-              )}
+                {shareUrl && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <input
+                      type="text"
+                      value={shareUrl}
+                      readOnly
+                      style={{
+                        flex: 1,
+                        padding: '10px 12px',
+                        borderRadius: '10px',
+                        border: '1px solid var(--border-color)',
+                        fontSize: '0.9rem',
+                        color: 'var(--text-primary)',
+                        background: 'var(--bg-secondary)'
+                      }}
+                      onFocus={(e) => e.currentTarget.select()}
+                    />
+                    <button
+                      onClick={handleCopyLink}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        cursor: 'pointer',
+                        padding: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: 'var(--text-secondary)',
+                        transition: 'color 0.2s, transform 0.2s'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = 'var(--partner1)';
+                        e.currentTarget.style.transform = 'scale(1.1)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'var(--text-secondary)';
+                        e.currentTarget.style.transform = 'scale(1)';
+                      }}
+                      title={copied ? 'Copied!' : 'Copy link'}
+                    >
+                      {copied ? (
+                        <span style={{ fontSize: '1.2rem' }}>✓</span>
+                      ) : (
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                )}
 
-              {shareUrl && (
-                <button 
-                  className="btn btn--accent btn--full" 
-                  onClick={handleSendInvite}
-                  style={{ marginTop: '8px' }}
-                >
-                  Send Invite Link
-                </button>
-              )}
-            </div>
+                {shareUrl && (
+                  <button 
+                    className="btn btn--accent btn--full" 
+                    onClick={handleSendInvite}
+                    style={{ marginTop: '8px' }}
+                  >
+                    Send Invite Link
+                  </button>
+                )}
+              </div>
+            )}
 
-            {/* Only show waiting message after link is copied or sent */}
-            {hasShared && (
+            {/* Host: show waiting message after link is copied or sent */}
+            {!isJoiner && hasShared && (
               <div style={{ 
                 color: '#F97316', 
                 fontSize: '1.1rem', 
@@ -235,7 +238,8 @@ export function RemoteSessionSetup() {
                 />
                 <span 
                   style={{ 
-                    fontWeight: 500
+                    fontWeight: 500,
+                    animation: 'pulse 2s ease-in-out infinite'
                   }}
                 >
                   Waiting for {state.partner2Name || 'your partner'}
@@ -243,7 +247,41 @@ export function RemoteSessionSetup() {
               </div>
             )}
 
-            {/* Joiners are taken here via /play/{code}. Hosts just wait; game will start automatically when partner joins. */}
+            {/* Joiner UI - show connecting/waiting state */}
+            {isJoiner && (
+              <div style={{ 
+                color: '#F97316', 
+                fontSize: '1.1rem', 
+                marginTop: '24px',
+                marginBottom: '16px',
+                minHeight: '28px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px'
+              }}>
+                <span 
+                  style={{ 
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    backgroundColor: '#F97316',
+                    animation: 'pulse 2s ease-in-out infinite',
+                    display: 'inline-block'
+                  }}
+                />
+                <span 
+                  style={{ 
+                    fontWeight: 500,
+                    animation: 'pulse 2s ease-in-out infinite'
+                  }}
+                >
+                  Connecting to {state.partner1Name || 'your partner'}...
+                </span>
+              </div>
+            )}
+
+            {/* Joiner additional info */}
             {isJoiner && (
               <>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '8px' }}>
