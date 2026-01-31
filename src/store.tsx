@@ -874,11 +874,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
         }
 
         if (msg.type === 'session_cancelled') {
-          // Player 2 receives cancellation notification
+          // Player 2 receives cancellation notification - go to landing (not sessionCancelled)
+          // CANCEL_REMOTE_SESSION already resets everything and navigates to landing
           const current = stateRef.current;
           if (current.remotePlayerId === 2) {
             internalDispatch({ type: 'CANCEL_REMOTE_SESSION' });
-            internalDispatch({ type: 'NAVIGATE_TO', screen: 'sessionCancelled' });
           }
           return;
         }
