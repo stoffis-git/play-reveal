@@ -399,13 +399,26 @@ function gameReducer(state: GameState, action: GameAction): GameState {
 
     case 'CANCEL_REMOTE_SESSION':
       saveRemoteSession(null, null);
+      // Fully reset remote session AND game progress
       return {
         ...state,
+        // Reset remote session
         gameMode: 'local',
         remoteSessionId: null,
         remotePlayerId: null,
         isRemoteConnected: false,
         remoteSessionPaid: false,
+        // Reset game progress
+        sessionId: uuidv4(), // New session ID for fresh start
+        round1Cards: [],
+        round2Cards: [],
+        round1Complete: false,
+        round2Complete: false,
+        currentPlayer: 1,
+        selectedCardIndex: null,
+        selectedAnswer: null,
+        revealConfirmedBy: null,
+        // Navigate to landing
         currentScreen: 'landing'
       };
 
