@@ -878,6 +878,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
           // CANCEL_REMOTE_SESSION already resets everything and navigates to landing
           const current = stateRef.current;
           if (current.remotePlayerId === 2) {
+            // Clear the URL path so the invite link handler doesn't re-trigger
+            window.history.replaceState(null, '', '/');
             internalDispatch({ type: 'CANCEL_REMOTE_SESSION' });
           }
           return;
