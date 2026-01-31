@@ -873,13 +873,17 @@ export function GameProvider({ children }: { children: ReactNode }) {
         if (msg.type === 'presence') {
           // If I'm host and player2 joins, start the game and sync snapshot.
           const current = stateRef.current;
+          const gameAlreadyStarted = current.round1Cards.length > 0;
+          
           console.log('[Remote Session] Received presence message', {
             myPlayerId: current.remotePlayerId,
             presencePlayer: msg.payload.player,
-            willStartGame: current.remotePlayerId === 1 && msg.payload.player === 2
+            gameAlreadyStarted,
+            willStartGame: current.remotePlayerId === 1 && msg.payload.player === 2 && !gameAlreadyStarted
           });
           
-          if (current.remotePlayerId === 1 && msg.payload.player === 2) {
+          // Only start game if Player 1 receives Player 2's presence AND game hasn't started yet
+          if (current.remotePlayerId === 1 && msg.payload.player === 2 && !gameAlreadyStarted) {
             console.log('[Remote Session] Player 1: Player 2 joined, starting game');
             internalDispatch({ type: 'SET_REMOTE_SESSION_PAID', paid: true });
             pendingHostSnapshotRef.current = true;
