@@ -792,6 +792,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
         const isConnected = status === 'connected';
         isConnectedRef.current = isConnected;
         internalDispatch({ type: 'SET_REMOTE_CONNECTION', connected: isConnected });
+        
+        // When Player 2 becomes connected and is waiting on remoteSetup, send presence
+        // This handles the race condition where Player 2 clicked Accept before connection was ready
+        if (isConnected && stateRef.current.remotePlayerId === 2 && stateRef.current.currentScreen === 'remoteSetup') {
+          console.log('[Remote Session] Player 2 connected while on remoteSetup, sending presence now');
+          void syncRef.current?.sendPresence(2);
+        }
       },
       onMessage: (msg) => {
         console.log('[Remote Session] Received message', { 
