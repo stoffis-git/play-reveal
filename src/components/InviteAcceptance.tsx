@@ -4,9 +4,6 @@ import { Menu } from './Menu';
 export function InviteAcceptance() {
   const { state, dispatch } = useGame();
 
-  // If no partner1Name, the session is likely invalid/cancelled
-  const isInvalidSession = !state.partner1Name;
-
   const handleAccept = () => {
     console.log('[Remote Session] Accept button clicked', {
       currentScreen: state.currentScreen,
@@ -24,40 +21,6 @@ export function InviteAcceptance() {
     dispatch({ type: 'DECLINE_REMOTE_INVITE' });
   };
 
-  const handleGoHome = () => {
-    window.history.replaceState(null, '', '/');
-    dispatch({ type: 'CANCEL_REMOTE_SESSION' });
-  };
-
-  // Show invalid session screen
-  if (isInvalidSession) {
-    return (
-      <div className="container animate-slide-up" style={{ paddingBottom: '10px' }}>
-        <div className="game-header" style={{ marginBottom: '0px' }}>
-          <Menu buttonPosition="inline" />
-          <div style={{ flex: 1 }}></div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '32px' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔗</div>
-          <h2 style={{ marginBottom: '8px' }}>Session Not Found</h2>
-          <p style={{ color: 'var(--text-secondary)', maxWidth: '380px', margin: '16px auto 32px' }}>
-            This invite link is no longer valid. The session may have been cancelled or expired.
-          </p>
-
-          <div style={{ maxWidth: '420px', margin: '0 auto' }}>
-            <button 
-              className="btn btn--primary btn--full" 
-              onClick={handleGoHome}
-            >
-              Go to Home
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="container animate-slide-up" style={{ paddingBottom: '10px' }}>
       <div className="game-header" style={{ marginBottom: '0px' }}>
@@ -69,7 +32,7 @@ export function InviteAcceptance() {
         <div style={{ fontSize: '3rem', marginBottom: '16px' }}>💌</div>
         <h2 style={{ marginBottom: '8px' }}>You're Invited!</h2>
         <p style={{ color: 'var(--text-secondary)', maxWidth: '380px', margin: '16px auto 32px' }}>
-          {state.partner1Name} invited you to play Reveal together.
+          {state.partner1Name || 'Your partner'} invited you to play Reveal together.
         </p>
 
         <div style={{ maxWidth: '420px', margin: '0 auto' }}>
