@@ -689,19 +689,68 @@ export function GameBoard({ round }: GameBoardProps) {
           >
             I'm {state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
           </button>
+          
+          {/* Alternative options - shown on first Partner 2 handoff */}
           {isFirstPartner2Handoff && (
-            <div style={{ marginTop: '32px', width: '100%', maxWidth: '420px' }}>
-              <p style={{ margin: '0 0 10px', fontSize: '0.85rem', color: 'white', textAlign: 'center' }}>
-                Not together right now?<br />
-                Create a remote session to play together.
+            <div style={{ 
+              marginTop: '40px', 
+              width: '100%', 
+              maxWidth: '420px',
+              borderTop: '1px solid rgba(255,255,255,0.2)',
+              paddingTop: '24px'
+            }}>
+              <p style={{ 
+                margin: '0 0 16px', 
+                fontSize: '0.8rem', 
+                color: 'rgba(255,255,255,0.7)', 
+                textAlign: 'center',
+                fontWeight: '500'
+              }}>
+                Not together right now?
               </p>
-              <button
-                className="btn btn--accent btn--full"
-                onClick={handleCreateRemoteSession}
-                style={{ marginTop: '12px' }}
-              >
-                Create Remote Session
-              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <button
+                  className="btn btn--full"
+                  onClick={handleCreateRemoteSession}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.15)',
+                    color: 'white',
+                    border: '1px solid rgba(255,255,255,0.3)',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🌐 Switch to Remote Mode
+                </button>
+                <button
+                  className="btn btn--full"
+                  onClick={async () => {
+                    const url = window.location.origin;
+                    const text = `Let's play this together later: Reveal – the game for couples.\n\nWhen we're both free, open this on one phone and we'll play together.`;
+                    try {
+                      if (navigator.share) {
+                        await navigator.share({ title: 'Reveal – Game for Couples', text, url });
+                        return;
+                      }
+                    } catch (err) {
+                      if (err && typeof err === 'object' && 'name' in err && (err as { name?: string }).name === 'AbortError') return;
+                    }
+                    try {
+                      await navigator.clipboard.writeText(`${text}\n\n${url}`);
+                      alert('Copied! Paste it into your favorite chat.');
+                    } catch {
+                      alert('Could not copy. Please share this link: ' + url);
+                    }
+                  }}
+                  style={{ 
+                    background: 'rgba(255,255,255,0.1)',
+                    color: 'rgba(255,255,255,0.8)',
+                    border: '1px solid rgba(255,255,255,0.2)',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  📤 Share to Play Later
+                </button>
+              </div>
             </div>
           )}
         </div>

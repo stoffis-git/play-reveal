@@ -259,17 +259,15 @@ export function LandingPage() {
                 </span>
               )}
             </div>
-            {!hasProgress && (
-              <div style={{ position: 'relative' }}>
-                <button
-                  className="btn btn--accent btn--full"
-                  onClick={handleRemote}
-                  disabled={!isValid}
-                >
-                  Play Remotely
-                </button>
-              </div>
-            )}
+            <div style={{ position: 'relative' }}>
+              <button
+                className="btn btn--accent btn--full"
+                onClick={handleRemote}
+                disabled={!isValid}
+              >
+                {hasProgress ? 'Switch to Remote Mode' : 'Play Remotely'}
+              </button>
+            </div>
           </div>
         </div>
 
