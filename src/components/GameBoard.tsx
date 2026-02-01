@@ -32,7 +32,6 @@ export function GameBoard({ round }: GameBoardProps) {
   const lastPlayerRef = useRef<number | null>(null); // Track last player to detect turn changes
   const prevCardsRef = useRef<Card[] | null>(null); // Track previous cards state to detect reveals
   const [showPassDevice, setShowPassDevice] = useState(false);
-  const [hasShownPartner2Share, setHasShownPartner2Share] = useState(false);
   const [showQuestion, setShowQuestion] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [cardPosition, setCardPosition] = useState<CardPosition | null>(null);
@@ -277,8 +276,6 @@ export function GameBoard({ round }: GameBoardProps) {
     if (round !== 2 || state.round1Cards.length === 0) return [];
     return getThemeSummaries(state.round1Cards);
   }, [round, state.round1Cards]);
-
-  const isFirstPartner2Handoff = showPassDevice && state.currentPlayer === 2 && !hasShownPartner2Share;
 
   const handleCreateRemoteSession = async () => {
     // Preserve partner names and payment status before reset
@@ -682,16 +679,13 @@ export function GameBoard({ round }: GameBoardProps) {
           <p className="pass-device__name">{state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}</p>
           <button
             className="btn btn--primary btn--full"
-            onClick={() => {
-              if (isFirstPartner2Handoff) setHasShownPartner2Share(true);
-              setShowPassDevice(false);
-            }}
+            onClick={() => setShowPassDevice(false)}
           >
             I'm {state.currentPlayer === 1 ? state.partner1Name : state.partner2Name}
           </button>
           
-          {/* Alternative options - shown on first Partner 2 handoff */}
-          {isFirstPartner2Handoff && (
+          {/* Alternative options - shown on both handoffs (pass to Partner 2 and pass to Partner 1) */}
+          {(
             <div style={{ 
               marginTop: '40px', 
               width: '100%', 

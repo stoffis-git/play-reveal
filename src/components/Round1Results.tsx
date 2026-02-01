@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useGame, getMismatchedCards, getThemeSummaries, getMatchCount, getQuestionForCard, getScoreTier } from '../store';
 import { Menu } from './Menu';
 import { themeColors } from '../types';
@@ -8,20 +8,26 @@ import { recordPayment } from '../services/paymentTracking';
 export function Round1Results() {
   const { state, dispatch } = useGame();
   const [hasConfirmed, setHasConfirmed] = useState(false);
+  const hasTriggeredRound2Ref = useRef(false);
   
   const isRemote = state.gameMode === 'remote' && Boolean(state.remoteSessionId);
   const isPaid = state.hasPaid || state.remoteSessionPaid;
   
   // For remote mode: detect when both have confirmed via revealConfirmedBy
+  // Both players dispatch START_ROUND_2, but Player 1 goes first (300ms) and broadcasts.
+  // Player 2 has a longer delay (600ms) as a fallback if broadcast doesn't arrive.
   useEffect(() => {
     if (isRemote && isPaid && state.revealConfirmedBy?.partner1 && state.revealConfirmedBy?.partner2) {
-      // Both confirmed - start Round 2 (only Player 1 dispatches to avoid duplicate)
-      if (state.remotePlayerId === 1) {
-        const timer = setTimeout(() => {
-          dispatch({ type: 'START_ROUND_2' });
-        }, 300);
-        return () => clearTimeout(timer);
-      }
+      if (hasTriggeredRound2Ref.current) return; // Prevent duplicate dispatches
+      hasTriggeredRound2Ref.current = true;
+      
+      // Player 1 dispatches first (will broadcast and send snapshot)
+      // Player 2 dispatches later as a fallback (cards will be overwritten by snapshot)
+      const delay = state.remotePlayerId === 1 ? 300 : 600;
+      const timer = setTimeout(() => {
+        dispatch({ type: 'START_ROUND_2' });
+      }, delay);
+      return () => clearTimeout(timer);
     }
   }, [state.revealConfirmedBy, isRemote, isPaid, state.remotePlayerId, dispatch]);
 

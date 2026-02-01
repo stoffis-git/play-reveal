@@ -768,6 +768,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // START_ROUND_2 should only be broadcast by Player 1 (host) who creates the cards
+    // Player 2 dispatches locally as a fallback but shouldn't broadcast (to avoid card conflicts)
+    if (action.type === 'START_ROUND_2' && s.remotePlayerId !== 1) {
+      return;
+    }
+
     // Broadcast action to the other player
     void syncRef.current?.sendAction(action);
   };

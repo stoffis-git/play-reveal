@@ -241,7 +241,7 @@ export function LandingPage() {
               >
                 {hasProgress ? '→ Continue Playing' : 'Play in Person'}
               </button>
-              {!hasProgress && (
+              {!hasProgress && !state.hasPaid && (
                 <span style={{
                   position: 'absolute',
                   top: '-6px',
